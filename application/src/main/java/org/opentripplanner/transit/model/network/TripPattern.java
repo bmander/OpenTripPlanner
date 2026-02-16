@@ -106,6 +106,9 @@ public final class TripPattern
   private final byte[][] hopGeometries;
 
   @Nullable
+  private final I18NString tripHeadsign;
+
+  @Nullable
   private final TripPattern originalTripPattern;
 
   private final boolean realTimeTripPattern;
@@ -139,6 +142,19 @@ public final class TripPattern
     }
 
     this.originalTripPattern = builder.getOriginalTripPattern();
+
+    // Pre-compute trip headsign from the scheduled timetable
+    var representativeTripTimes = scheduledTimetable.getRepresentativeTripTimes();
+    if (representativeTripTimes != null) {
+      this.tripHeadsign = representativeTripTimes.getTripHeadsign();
+    } else if (
+      originalTripPattern != null &&
+      stopPattern.stopsEqual(originalTripPattern.getStopPattern())
+    ) {
+      this.tripHeadsign = originalTripPattern.getTripHeadsign();
+    } else {
+      this.tripHeadsign = null;
+    }
 
     this.hopGeometries = builder.hopGeometries();
     this.routingTripPattern = new RoutingTripPattern(this);
@@ -466,10 +482,7 @@ public final class TripPattern
    * @return trip headsign
    */
   public I18NString getTripHeadsign() {
-    var tripTimes = scheduledTimetable.getRepresentativeTripTimes();
-    return tripTimes == null
-      ? getTripHeadsignFromOriginalPattern()
-      : getTripHeadSignFromTripTimes(tripTimes);
+    return tripHeadsign;
   }
 
   public TripPattern clone() {
@@ -541,23 +554,5 @@ public final class TripPattern
    */
   private boolean containsSameStopsAsOriginalPattern() {
     return isModified() && getStops().equals(originalTripPattern.getStops());
-  }
-
-  /**
-   * Helper method for getting the trip headsign from the {@link TripTimes}.
-   */
-  private I18NString getTripHeadSignFromTripTimes(TripTimes tripTimes) {
-    return tripTimes != null ? tripTimes.getTripHeadsign() : null;
-  }
-
-  /**
-   * Returns trip headsign from the original pattern if one exists.
-   */
-  private I18NString getTripHeadsignFromOriginalPattern() {
-    if (containsSameStopsAsOriginalPattern()) {
-      var tripTimes = originalTripPattern.getScheduledTimetable().getRepresentativeTripTimes();
-      return getTripHeadSignFromTripTimes(tripTimes);
-    }
-    return null;
   }
 }
