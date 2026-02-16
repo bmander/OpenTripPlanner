@@ -140,7 +140,9 @@ class RealtimeVehiclePatternMatcher {
   }
 
   private LocalDate inferServiceDate(Trip trip) {
-    var staticTripTimes = getScheduledTimetable.apply(getStaticPattern.apply(trip)).getTripTimes(trip);
+    var staticTripTimes = getScheduledTimetable
+      .apply(getStaticPattern.apply(trip))
+      .getTripTimes(trip);
     return inferServiceDate(staticTripTimes, timeZoneId, Instant.now());
   }
 
@@ -357,7 +359,9 @@ class RealtimeVehiclePatternMatcher {
     // the trip times are only used for mapping the GTFS-RT stop_sequence back to a stop.
     // because new trips without trip times are created for realtime-updated ones, we explicitly
     // look at the static trips for the stop_sequence->stop mapping
-    var staticTripTimes = getScheduledTimetable.apply(getStaticPattern.apply(trip)).getTripTimes(trip);
+    var staticTripTimes = getScheduledTimetable
+      .apply(getStaticPattern.apply(trip))
+      .getTripTimes(trip);
     if (staticTripTimes == null) {
       return UpdateError.result(scopedTripId, TRIP_NOT_FOUND_IN_PATTERN);
     }

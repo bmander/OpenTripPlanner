@@ -30,6 +30,7 @@ import org.opentripplanner.transit.model.organization.Operator;
 import org.opentripplanner.transit.model.site.AreaStop;
 import org.opentripplanner.transit.model.site.GroupStop;
 import org.opentripplanner.transit.model.site.RegularStop;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 import org.opentripplanner.transit.model.timetable.TripTimes;
@@ -242,6 +243,8 @@ class TripPatternMapper {
       );
     }
 
+    var timetable = Timetable.of().addAllTripTimes(createTripTimes(trips, tripStopTimes)).build();
+
     var tripPattern = TripPattern.of(idFactory.createId(journeyPattern.getId()))
       .withRoute(lookupRoute(journeyPattern))
       .withStopPattern(stopPattern)
@@ -252,9 +255,7 @@ class TripPatternMapper {
       .withHopGeometries(
         serviceLinkMapper.getGeometriesByJourneyPattern(journeyPattern, stopPattern)
       )
-      .withScheduledTimeTableBuilder(builder ->
-        builder.addAllTripTimes(createTripTimes(trips, tripStopTimes))
-      )
+      .withScheduledTimeTable(timetable)
       .build();
 
     return Optional.of(

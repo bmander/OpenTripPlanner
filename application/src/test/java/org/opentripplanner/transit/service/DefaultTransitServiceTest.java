@@ -37,6 +37,7 @@ import org.opentripplanner.transit.model.site.StopLocation;
 import org.opentripplanner.transit.model.timetable.RealTimeTripTimes;
 import org.opentripplanner.transit.model.timetable.RealTimeTripUpdate;
 import org.opentripplanner.transit.model.timetable.ScheduledTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TimetableSnapshot;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
@@ -100,7 +101,7 @@ class DefaultTransitServiceTest {
     .build();
 
   private static final TripPattern RAIL_PATTERN = TEST_MODEL.pattern(RAIL)
-    .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(SCHEDULED_TRIP_TIMES))
+    .withScheduledTimeTable(Timetable.of().addTripTimes(SCHEDULED_TRIP_TIMES).build())
     .build();
 
   private static final int DELAY = 120;
@@ -125,7 +126,7 @@ class DefaultTransitServiceTest {
     .build();
   private static final TripPattern BUS_PATTERN_TODAY = TEST_MODEL.pattern(BUS)
     .withStopPattern(REAL_TIME_STOP_PATTERN)
-    .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(SCHEDULED_TRIP_TIMES_TODAY))
+    .withScheduledTimeTable(Timetable.of().addTripTimes(SCHEDULED_TRIP_TIMES_TODAY).build())
     .build();
 
   private static final LocalDate SERVICE_DATE = LocalDate.of(2024, 1, 1);

@@ -35,6 +35,7 @@ import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.timetable.OccupancyStatus;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 
@@ -383,8 +384,10 @@ public class RealtimeVehicleMatcherTest {
     var pattern = TripPattern.of(trip.getId())
       .withStopPattern(stopPattern)
       .withRoute(ROUTE)
-      .withScheduledTimeTableBuilder(builder ->
-        builder.addTripTimes(TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator()))
+      .withScheduledTimeTable(
+        Timetable.of()
+          .addTripTimes(TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator()))
+          .build()
       )
       .build();
     return pattern;

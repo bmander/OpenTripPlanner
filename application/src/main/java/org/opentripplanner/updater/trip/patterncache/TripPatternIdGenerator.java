@@ -3,8 +3,8 @@ package org.opentripplanner.updater.trip.patterncache;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.gtfs.GenerateTripPatternsOperation;
-import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.basic.Direction;
+import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.timetable.Trip;
 
 /**

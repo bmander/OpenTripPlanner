@@ -9,6 +9,7 @@ import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 
 class EmpiricalDelayGraphBuilderTest {
@@ -36,7 +37,7 @@ class EmpiricalDelayGraphBuilderTest {
     var pattern = TripPattern.of(trip.getId())
       .withRoute(trip.getRoute())
       .withStopPattern(stopPattern)
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
       .build();
 
     var map = EmpiricalDelayGraphBuilder.createStopIdsByTripIdMap(

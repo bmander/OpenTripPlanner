@@ -421,8 +421,9 @@ public class TimetableRepository implements Serializable {
   public void addTripPattern(FeedScopedId id, TripPattern tripPattern) {
     invalidateIndex();
     tripPatternForId.put(id, tripPattern);
-    // Auto-populate the scheduled timetable map from the pattern during transition
-    scheduledTimetableByPatternId.put(id, tripPattern.getScheduledTimetable());
+    // Auto-populate the scheduled timetable map using the pattern's own ID,
+    // which is what getScheduledTimetable(TripPattern) uses for lookup
+    scheduledTimetableByPatternId.put(tripPattern.getId(), tripPattern.getScheduledTimetable());
   }
 
   public void addScheduledTimetable(FeedScopedId patternId, Timetable timetable) {
@@ -434,7 +435,12 @@ public class TimetableRepository implements Serializable {
   }
 
   public Timetable getScheduledTimetable(TripPattern pattern) {
-    return scheduledTimetableByPatternId.get(pattern.getId());
+    var timetable = scheduledTimetableByPatternId.get(pattern.getId());
+    if (timetable != null) {
+      return timetable;
+    }
+    // Fallback for patterns not registered in the repository (e.g., realtime-created patterns)
+    return pattern.getScheduledTimetable();
   }
 
   public void addScheduledStopPointMapping(Map<FeedScopedId, RegularStop> mapping) {
@@ -605,9 +611,7 @@ public class TimetableRepository implements Serializable {
   ) {
     Set<StopLocation> stopLocations = getAllTripPatterns()
       .stream()
-      .filter(t ->
-        getScheduledTimetable(t).getTripTimes().stream().anyMatch(tripTimesPredicate)
-      )
+      .filter(t -> getScheduledTimetable(t).getTripTimes().stream().anyMatch(tripTimesPredicate))
       .flatMap(t -> t.getStops().stream())
       .collect(Collectors.toSet());
 

@@ -23,6 +23,7 @@ import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.Station;
 import org.opentripplanner.transit.model.timetable.ScheduledTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
 
 /**
  * <img src="DirectTransferGeneratorTest.drawio.png" />
@@ -176,17 +177,19 @@ class DirectTransferGeneratorTestData extends GraphRoutingTest {
           TripPattern.of(TimetableRepositoryForTest.id("TP2"))
             .withRoute(route("R2", TransitMode.BUS, agency))
             .withStopPattern(new StopPattern(List.of(st(S21), st(S22), st(S_FAR_AWAY))))
-            .withScheduledTimeTableBuilder(builder ->
-              builder.addTripTimes(
-                ScheduledTripTimes.of()
-                  .withTrip(
-                    TimetableRepositoryForTest.trip("bikesAllowedTrip")
-                      .withBikesAllowed(BikeAccess.ALLOWED)
-                      .build()
-                  )
-                  .withDepartureTimes("00:00 01:00 02:00")
-                  .build()
-              )
+            .withScheduledTimeTable(
+              Timetable.of()
+                .addTripTimes(
+                  ScheduledTripTimes.of()
+                    .withTrip(
+                      TimetableRepositoryForTest.trip("bikesAllowedTrip")
+                        .withBikesAllowed(BikeAccess.ALLOWED)
+                        .build()
+                    )
+                    .withDepartureTimes("00:00 01:00 02:00")
+                    .build()
+                )
+                .build()
             )
             .build()
         );
@@ -196,8 +199,8 @@ class DirectTransferGeneratorTestData extends GraphRoutingTest {
             TripPattern.of(TimetableRepositoryForTest.id("TP4"))
               .withRoute(route("R4", TransitMode.FERRY, agency))
               .withStopPattern(new StopPattern(List.of(st(S_FAR_AWAY), st(S0), st(S12))))
-              .withScheduledTimeTableBuilder(b ->
-                b.addTripTimes(createCarsAllowedTripTimesWithTwoStops())
+              .withScheduledTimeTable(
+                Timetable.of().addTripTimes(createCarsAllowedTripTimesWithTwoStops()).build()
               )
               .build()
           );
@@ -205,8 +208,8 @@ class DirectTransferGeneratorTestData extends GraphRoutingTest {
             TripPattern.of(TimetableRepositoryForTest.id("TP5"))
               .withRoute(route("R5", TransitMode.FERRY, agency))
               .withStopPattern(new StopPattern(List.of(st(S22), st(S23))))
-              .withScheduledTimeTableBuilder(b ->
-                b.addTripTimes(createCarsAllowedTripTimesWithTwoStops())
+              .withScheduledTimeTable(
+                Timetable.of().addTripTimes(createCarsAllowedTripTimesWithTwoStops()).build()
               )
               .build()
           );

@@ -20,6 +20,7 @@ import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.Station;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TimetableSnapshot;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
@@ -97,7 +98,7 @@ class ScheduledTransitLegReferenceTest {
         TimetableRepositoryForTest.route(id("1")).build()
       )
         .withStopPattern(item.getValue())
-        .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+        .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
         .build();
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
       timetableRepository.getServiceCodes().put(tripPattern.getId(), SERVICE_CODE);

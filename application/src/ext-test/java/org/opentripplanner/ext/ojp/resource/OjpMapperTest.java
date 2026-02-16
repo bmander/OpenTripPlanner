@@ -26,6 +26,7 @@ import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
@@ -57,7 +58,7 @@ class OjpMapperTest {
     ROUTE
   )
     .withStopPattern(TimetableRepositoryForTest.stopPattern(STOP_1, STOP_2))
-    .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(TRIP_TIMES))
+    .withScheduledTimeTable(Timetable.of().addTripTimes(TRIP_TIMES).build())
     .build();
   private static final TripTimeOnDate TRIP_TIMES_ON_DATE = new TripTimeOnDate(
     TRIP_TIMES,

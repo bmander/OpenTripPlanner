@@ -30,6 +30,7 @@ import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.organization.Operator;
 import org.opentripplanner.transit.model.timetable.RealTimeState;
 import org.opentripplanner.transit.model.timetable.RealTimeTripTimesBuilder;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
@@ -236,13 +237,15 @@ class AddedTripBuilder {
     );
     tripTimes.validateNonIncreasingTimes();
 
+    var timetable = Timetable.of().addTripTimes(tripTimes).build();
+
     TripPattern pattern = TripPattern.of(getTripPatternId.apply(trip))
       .withRoute(trip.getRoute())
       .withMode(trip.getMode())
       .withNetexSubmode(trip.getNetexSubMode())
       .withStopPattern(stopPattern)
       .withRealTimeAddedTrip()
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(timetable)
       .build();
 
     RealTimeTripTimesBuilder builder = tripTimes.createRealTimeFromScheduledTimes();

@@ -25,6 +25,7 @@ import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
@@ -59,7 +60,7 @@ public class TestRouteData {
     tripPattern = TripPattern.of(TimetableRepositoryForTest.id("TP:" + route))
       .withRoute(this.route)
       .withStopPattern(new StopPattern(stopTimesFistTrip))
-      .withScheduledTimeTableBuilder(builder -> builder.addAllTripTimes(tripTimes))
+      .withScheduledTimeTable(Timetable.of().addAllTripTimes(tripTimes).build())
       .build();
 
     RoutingTripPattern routingTripPattern = tripPattern.getRoutingTripPattern();

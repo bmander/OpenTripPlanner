@@ -227,10 +227,10 @@ public class TimetableRepositoryTestBuilder {
   }
 
   private void addTripTimesToPattern(TripPattern tripPattern, TripTimes tripTimes) {
-    var newPattern = tripPattern
-      .copy()
-      .withScheduledTimeTableBuilder(b -> b.addTripTimes(tripTimes))
-      .build();
+    var existingTimetable = tripPattern.getScheduledTimetable();
+    var timetableBuilder = existingTimetable.copyOf();
+    timetableBuilder.addTripTimes(tripTimes);
+    var newPattern = tripPattern.copy().withScheduledTimeTable(timetableBuilder.build()).build();
     tripPatterns.put(TripPatternKey.of(newPattern), newPattern);
   }
 

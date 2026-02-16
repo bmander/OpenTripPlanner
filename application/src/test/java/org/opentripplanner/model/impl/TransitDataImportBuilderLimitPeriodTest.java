@@ -18,14 +18,14 @@ import org.opentripplanner.model.calendar.LocalDateInterval;
 import org.opentripplanner.model.calendar.ServiceCalendar;
 import org.opentripplanner.model.calendar.ServiceCalendarDate;
 import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.framework.EntityById;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
-import org.opentripplanner.transit.model.network.TripPatternBuilder;
 import org.opentripplanner.transit.model.site.RegularStop;
-import org.opentripplanner.transit.model.basic.Direction;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 import org.opentripplanner.transit.service.SiteRepository;
@@ -200,16 +200,15 @@ public class TransitDataImportBuilderLimitPeriodTest {
         .map(t -> t.getId().getId())
         .collect(Collectors.joining(":"))
     );
-    TripPatternBuilder tpb = TripPattern.of(patternId)
-      .withRoute(route)
-      .withStopPattern(STOP_PATTERN);
-
+    var timetableBuilder = Timetable.of();
     for (Trip trip : trips) {
-      tpb.withScheduledTimeTableBuilder(builder ->
-        builder.addTripTimes(TripTimesFactory.tripTimes(trip, STOP_TIMES, DEDUPLICATOR))
-      );
+      timetableBuilder.addTripTimes(TripTimesFactory.tripTimes(trip, STOP_TIMES, DEDUPLICATOR));
     }
-    return tpb.build();
+    return TripPattern.of(patternId)
+      .withRoute(route)
+      .withStopPattern(STOP_PATTERN)
+      .withScheduledTimeTable(timetableBuilder.build())
+      .build();
   }
 
   private Trip createTrip(String id, FeedScopedId serviceId) {

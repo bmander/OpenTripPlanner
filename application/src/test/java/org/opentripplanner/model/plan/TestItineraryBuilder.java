@@ -42,6 +42,7 @@ import org.opentripplanner.transit.model.network.GroupOfRoutes;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
@@ -550,7 +551,7 @@ public class TestItineraryBuilder implements PlanTestConstants {
     TripPattern tripPattern = TripPattern.of(route.getId())
       .withRoute(route)
       .withStopPattern(stopPattern)
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
       .build();
 
     ScheduledTransitLeg leg;

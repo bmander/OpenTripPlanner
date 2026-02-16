@@ -114,6 +114,7 @@ import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.Station;
 import org.opentripplanner.transit.model.site.StopLocation;
 import org.opentripplanner.transit.model.timetable.RealTimeTripUpdate;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TimetableSnapshot;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
@@ -226,8 +227,8 @@ class GraphQLIntegrationTest {
       .withServiceId(cal_id)
       .build();
     final TripPattern pattern = TEST_MODEL.pattern(BUS)
-      .withScheduledTimeTableBuilder(builder ->
-        builder
+      .withScheduledTimeTable(
+        Timetable.of()
           .addTripTimes(tripTimes)
           .addTripTimes(tripTimes2)
           .addTripTimes(
@@ -237,6 +238,7 @@ class GraphQLIntegrationTest {
               DEDUPLICATOR
             )
           )
+          .build()
       )
       .build();
 

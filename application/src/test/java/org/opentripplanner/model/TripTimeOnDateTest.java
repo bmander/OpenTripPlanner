@@ -164,7 +164,7 @@ class TripTimeOnDateTest {
       .build();
     var tripPattern = testModel
       .pattern(TransitMode.BUS)
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
       .build();
     timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
     timetableRepository.index();
@@ -179,7 +179,7 @@ class TripTimeOnDateTest {
     Instant midnight = ServiceDateUtils.asStartOfService(serviceDate, ZoneIds.HELSINKI).toInstant();
     var tripTimeOnDates = TripTimeOnDate.fromTripTimesWithScheduleFallback(
       timetable,
-      timetable,
+      timetableRepository.getScheduledTimetable(tripPattern),
       trip,
       serviceDate,
       midnight

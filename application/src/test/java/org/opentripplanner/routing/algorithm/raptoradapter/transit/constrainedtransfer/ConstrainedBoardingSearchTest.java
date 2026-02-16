@@ -455,10 +455,8 @@ public class ConstrainedBoardingSearchTest {
   private ConstrainedTransfersForPatterns generateTransfersForPatterns(
     Collection<ConstrainedTransfer> txList
   ) {
-    return new TransferIndexGenerator(
-      txList,
-      List.of(pattern1, pattern2),
-      p -> p.scheduledTripsAsStream().toList()
+    return new TransferIndexGenerator(txList, List.of(pattern1, pattern2), p ->
+      p.scheduledTripsAsStream().toList()
     ).generateTransfers();
   }
 }

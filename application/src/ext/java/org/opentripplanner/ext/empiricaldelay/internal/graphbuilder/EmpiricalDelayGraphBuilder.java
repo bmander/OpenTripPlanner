@@ -61,9 +61,8 @@ public class EmpiricalDelayGraphBuilder implements GraphBuilderModule {
       return;
     }
     var mapper = new TripDelaysMapper(
-      createStopIdsByTripIdMap(
-        timetableRepository.getAllTripPatterns(),
-        p -> timetableRepository.getScheduledTimetable(p).tripsAsStream()
+      createStopIdsByTripIdMap(timetableRepository.getAllTripPatterns(), p ->
+        timetableRepository.getScheduledTimetable(p).tripsAsStream()
       ),
       issueStore,
       deduplicator

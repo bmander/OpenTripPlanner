@@ -124,8 +124,7 @@ public class TimetableRepositoryArchitectureTest {
   void noNewNetworkToTimetableDependencies() {
     var notGrandfathered = DescribedPredicate.describe(
       "not in the grandfathered network->timetable set",
-      (JavaClass javaClass) ->
-        !GRANDFATHERED_NETWORK_TO_TIMETABLE.contains(javaClass.getName())
+      (JavaClass javaClass) -> !GRANDFATHERED_NETWORK_TO_TIMETABLE.contains(javaClass.getName())
     );
 
     noClasses()

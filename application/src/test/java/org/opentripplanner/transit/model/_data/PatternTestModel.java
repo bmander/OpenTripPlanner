@@ -8,6 +8,7 @@ import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.timetable.ScheduledTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.service.SiteRepository;
 
@@ -41,7 +42,7 @@ public class PatternTestModel {
 
     return TimetableRepositoryForTest.tripPattern("1", ROUTE_1)
       .withStopPattern(STOP_PATTERN)
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tt))
+      .withScheduledTimeTable(Timetable.of().addTripTimes(tt).build())
       .build();
   }
 }

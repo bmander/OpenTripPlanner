@@ -18,15 +18,17 @@ import org.opentripplanner.graph_builder.module.geometry.GeometryProcessor;
 import org.opentripplanner.model.Frequency;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.impl.TransitDataImportBuilder;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.framework.DataValidationException;
 import org.opentripplanner.transit.model.framework.DeduplicatorService;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.network.TripPatternBuilder;
-import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.timetable.FrequencyEntry;
 import org.opentripplanner.transit.model.timetable.ScheduledTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
+import org.opentripplanner.transit.model.timetable.TimetableBuilder;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 import org.opentripplanner.utils.logging.ProgressTracker;
@@ -52,6 +54,7 @@ public class GenerateTripPatternsOperation {
   //  as Trips are imported, as a workaround for issue #6067
   private final Multimap<StopPattern, TripPatternBuilder> tripPatternBuilders =
     MultimapBuilder.linkedHashKeys().linkedHashSetValues().build();
+  private final Map<TripPatternBuilder, TimetableBuilder> timetableBuilders = new HashMap<>();
   private final ListMultimap<Trip, Frequency> frequenciesForTrip = ArrayListMultimap.create();
 
   private int freqCount = 0;
@@ -91,11 +94,13 @@ public class GenerateTripPatternsOperation {
 
     tripPatternBuilders
       .values()
-      .stream()
-      .map(TripPatternBuilder::build)
-      .forEach(tripPattern ->
-        transitServiceBuilder.getTripPatterns().put(tripPattern.getStopPattern(), tripPattern)
-      );
+      .forEach(tpb -> {
+        // Build the timetable and set it on the pattern builder before building the pattern
+        Timetable timetable = timetableBuilders.get(tpb).build();
+        tpb.withScheduledTimeTable(timetable);
+        TripPattern tripPattern = tpb.build();
+        transitServiceBuilder.getTripPatterns().put(tripPattern.getStopPattern(), tripPattern);
+      });
 
     LOG.info(progressLogger.completeMessage());
     LOG.info(
@@ -154,17 +159,16 @@ public class GenerateTripPatternsOperation {
 
     // If this trip is referenced by one or more lines in frequencies.txt, wrap it in a FrequencyEntry.
     List<Frequency> frequencies = frequenciesForTrip.get(trip);
+    TimetableBuilder ttBuilder = timetableBuilders.get(tripPatternBuilder);
     if (!frequencies.isEmpty()) {
       for (Frequency freq : frequencies) {
-        tripPatternBuilder.withScheduledTimeTableBuilder(builder ->
-          builder.addFrequencyEntry(new FrequencyEntry(freq, tripTimes))
-        );
+        ttBuilder.addFrequencyEntry(new FrequencyEntry(freq, tripTimes));
         freqCount++;
       }
     }
     // This trip was not frequency-based. Add the TripTimes directly to the TripPattern's scheduled timetable.
     else {
-      tripPatternBuilder.withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes));
+      ttBuilder.addTripTimes(tripTimes);
       scheduledCount++;
     }
   }
@@ -188,8 +192,10 @@ public class GenerateTripPatternsOperation {
       .withStopPattern(stopPattern)
       .withMode(trip.getMode())
       .withNetexSubmode(trip.getNetexSubMode())
+      .withDirection(direction)
       .withHopGeometries(geometryProcessor.createHopGeometries(trip));
     tripPatternBuilders.put(stopPattern, tripPatternBuilder);
+    timetableBuilders.put(tripPatternBuilder, Timetable.of());
     return tripPatternBuilder;
   }
 

@@ -23,7 +23,7 @@ import org.opentripplanner.transit.model.network.TripPattern;
  */
 public class Timetable implements Serializable {
 
-  private final TripPattern pattern;
+  private TripPattern pattern;
 
   private List<TripTimes> tripTimes;
 
@@ -96,6 +96,14 @@ public class Timetable implements Serializable {
    */
   public TripPattern getPattern() {
     return pattern;
+  }
+
+  /**
+   * Set the back-reference to the TripPattern. This is used during TripPattern construction
+   * to resolve the circular reference between TripPattern and its scheduled Timetable.
+   */
+  public void setPattern(TripPattern pattern) {
+    this.pattern = pattern;
   }
 
   /**

@@ -23,6 +23,7 @@ import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.StopLocation;
 import org.opentripplanner.transit.model.timetable.RealTimeState;
 import org.opentripplanner.transit.model.timetable.RealTimeTripTimesBuilder;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 import org.opentripplanner.transit.service.TransitEditorService;
@@ -147,13 +148,15 @@ class ExtraCallTripBuilder {
     // but in case of trip cancellation, OTP will fall back to scheduled trip times
     // therefore they must be valid
     tripTimes.validateNonIncreasingTimes();
+    var timetable = Timetable.of().addTripTimes(tripTimes).build();
+
     TripPattern pattern = TripPattern.of(generateTripPatternId.apply(trip))
       .withRoute(trip.getRoute())
       .withMode(trip.getMode())
       .withNetexSubmode(trip.getNetexSubMode())
       .withStopPattern(stopPattern)
       .withRealTimeStopPatternModified()
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(timetable)
       .build();
 
     RealTimeTripTimesBuilder builder = tripTimes.createRealTimeFromScheduledTimes();

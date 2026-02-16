@@ -18,13 +18,13 @@ import org.opentripplanner.framework.geometry.CompactLineStringUtils;
 import org.opentripplanner.framework.geometry.GeometryUtils;
 import org.opentripplanner.model.PickDrop;
 import org.opentripplanner.transit.model.basic.Accessibility;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.basic.SubMode;
 import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.transit.model.framework.AbstractTransitEntity;
 import org.opentripplanner.transit.model.framework.LogInfo;
 import org.opentripplanner.transit.model.site.Station;
 import org.opentripplanner.transit.model.site.StopLocation;
-import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
@@ -128,18 +128,14 @@ public final class TripPattern
     this.containsMultipleModes = builder.getContainsMultipleModes();
 
     if (builder.getScheduledTimetable() != null) {
-      if (builder.getScheduledTimetableBuilder() != null) {
-        throw new IllegalArgumentException(
-          "Cannot provide both scheduled timetable and scheduled timetable builder"
-        );
-      }
       this.scheduledTimetable = builder.getScheduledTimetable();
     } else {
-      this.scheduledTimetable = builder
-        .getScheduledTimetableBuilder()
-        .withTripPattern(this)
-        .build();
+      this.scheduledTimetable = Timetable.of().build();
     }
+    // Always set the pattern back-reference to this instance.
+    // This ensures the timetable points to the correct pattern even when the timetable
+    // was copied from another pattern (e.g., via Timetable.copyOf()).
+    this.scheduledTimetable.setPattern(this);
 
     this.originalTripPattern = builder.getOriginalTripPattern();
 
@@ -148,8 +144,7 @@ public final class TripPattern
     if (representativeTripTimes != null) {
       this.tripHeadsign = representativeTripTimes.getTripHeadsign();
     } else if (
-      originalTripPattern != null &&
-      stopPattern.stopsEqual(originalTripPattern.getStopPattern())
+      originalTripPattern != null && stopPattern.stopsEqual(originalTripPattern.getStopPattern())
     ) {
       this.tripHeadsign = originalTripPattern.getTripHeadsign();
     } else {

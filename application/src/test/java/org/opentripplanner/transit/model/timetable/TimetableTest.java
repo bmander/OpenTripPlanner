@@ -35,13 +35,15 @@ class TimetableTest {
     var timetable = TripPattern.of(id(testCaseName))
       .withRoute(ROUTE)
       .withStopPattern(TimetableRepositoryForTest.stopPattern(STOP_A, STOP_C))
-      .withScheduledTimeTableBuilder(builder ->
-        builder.addTripTimes(
-          ScheduledTripTimes.of()
-            .withTrip(TimetableRepositoryForTest.trip("t1").build())
-            .withDepartureTimes(schedule)
-            .build()
-        )
+      .withScheduledTimeTable(
+        Timetable.of()
+          .addTripTimes(
+            ScheduledTripTimes.of()
+              .withTrip(TimetableRepositoryForTest.trip("t1").build())
+              .withDepartureTimes(schedule)
+              .build()
+          )
+          .build()
       )
       .build()
       .getScheduledTimetable();

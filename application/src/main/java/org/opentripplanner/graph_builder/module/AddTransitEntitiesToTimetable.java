@@ -83,9 +83,9 @@ public class AddTransitEntitiesToTimetable {
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
 
       // TODO this could be more elegant
-      timetableRepository.getScheduledTimetable(tripPattern).setServiceCodes(
-        timetableRepository.getServiceCodes()
-      );
+      timetableRepository
+        .getScheduledTimetable(tripPattern)
+        .setServiceCodes(timetableRepository.getServiceCodes());
     }
   }
 

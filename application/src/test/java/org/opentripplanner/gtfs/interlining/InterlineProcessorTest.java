@@ -21,6 +21,7 @@ import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
 import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 
 class InterlineProcessorTest implements PlanTestConstants {
@@ -168,7 +169,7 @@ class InterlineProcessorTest implements PlanTestConstants {
     return TripPattern.of(TimetableRepositoryForTest.id(tripId))
       .withRoute(trip.getRoute())
       .withStopPattern(stopPattern)
-      .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
+      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
       .build();
   }
 }
