@@ -15,7 +15,6 @@ import static org.opentripplanner.OtpArchitectureModules.TRANSIT_MODEL;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import java.util.Set;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner._support.arch.ArchComponent;
 import org.opentripplanner._support.arch.Package;
@@ -32,15 +31,11 @@ public class TimetableRepositoryArchitectureTest {
   private static final Package LEGACY_MODEL = OTP_ROOT.subPackage("model");
 
   /**
-   * Grandfathered network classes that currently depend on timetable. No new classes should be
-   * added to this set. See doc/dev/transit-network-timetable-cycle-remediation-plan.md
+   * Grandfathered network classes that currently depend on timetable. This set is now empty -
+   * the network->timetable cycle has been fully resolved.
+   * See doc/dev/transit-network-timetable-cycle-remediation-plan.md
    */
-  private static final Set<String> GRANDFATHERED_NETWORK_TO_TIMETABLE = Set.of(
-    "org.opentripplanner.transit.model.network.TripPattern",
-    "org.opentripplanner.transit.model.network.TripPatternBuilder",
-    "org.opentripplanner.transit.model.network.grouppriority.TransitGroupPriorityService",
-    "org.opentripplanner.transit.model.network.grouppriority.TripAdapter"
-  );
+  private static final Set<String> GRANDFATHERED_NETWORK_TO_TIMETABLE = Set.of();
 
   @Test
   void enforceFrameworkPackageDependencies() {
@@ -72,8 +67,6 @@ public class TimetableRepositoryArchitectureTest {
 
   @Test
   void enforceNetworkPackageDependencies() {
-    // Timetable dependency is tracked for removal, see
-    // doc/dev/transit-network-timetable-cycle-remediation-plan.md
     NETWORK.dependsOn(
       FRAMEWORK_UTILS,
       GEO_UTILS,
@@ -81,7 +74,6 @@ public class TimetableRepositoryArchitectureTest {
       BASIC,
       ORGANIZATION,
       SITE,
-      TIMETABLE,
       LEGACY_MODEL,
       RAPTOR_API,
       RAPTOR_ADAPTER_API
@@ -104,9 +96,6 @@ public class TimetableRepositoryArchitectureTest {
   }
 
   @Test
-  // Disabled until network<->timetable cycle is fully resolved, see
-  // doc/dev/transit-network-timetable-cycle-remediation-plan.md
-  @Disabled
   void enforceNoCyclicDependencies() {
     slices()
       .matching(TRANSIT_MODEL.packageIdentifierAllSubPackages())

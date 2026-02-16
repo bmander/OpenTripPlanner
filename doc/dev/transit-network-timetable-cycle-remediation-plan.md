@@ -46,31 +46,32 @@ After remediation, re-enable the cycle test in:
 - Grandfathered set reduced from 6 → 4 classes.
 - Objective: reduce cycle surface area before touching core aggregate ownership.
 
-### 3. Break Main Aggregate Coupling (core PR)
+### 3. Break Main Aggregate Coupling (core PR) — DONE
 
-- Extract scheduled-time concerns from `TripPattern` into timetable-owned component(s).
-- Remove direct `TripPattern` ownership of `Timetable`:
-  - `application/src/main/java/org/opentripplanner/transit/model/network/TripPattern.java:86`
-- Refactor delegated timetable methods in `TripPattern`, including:
-  - `getDirection` (`TripPattern.java:386`)
-  - `scheduledTripsAsStream` (`TripPattern.java:396`)
-  - `getScheduledTimetable` (`TripPattern.java:410`)
-- Refactor `TripPatternBuilder` so it no longer stores/builds timetable internals:
-  - `application/src/main/java/org/opentripplanner/transit/model/network/TripPatternBuilder.java:32`
-  - `application/src/main/java/org/opentripplanner/transit/model/network/TripPatternBuilder.java:33`
+- Branch: `break-network-timetable-coupling`
+- Stored `Direction` directly on `TripPattern` (no longer delegates to timetable).
+- Pre-computed `tripHeadsign` on `TripPattern` during construction.
+- Added `tripsAsStream()` to `Timetable`.
+- Added scheduled timetable storage to `TimetableRepository` and `TransitService`.
+- Migrated all production and test callers of `pattern.getScheduledTimetable()` and
+  `pattern.scheduledTripsAsStream()` to use `TimetableRepository` lookup.
+- Decoupled `TripPatternBuilder` from timetable construction.
+- Removed `scheduledTimetable` field and all timetable methods from `TripPattern`.
+- Removed `Trip` dependency from `TransitGroupPriorityService` by making `EntityAdapter`
+  public and moving `TripAdapter` to `model.plan.grouppriority`.
+- Grandfathered set reduced from 4 → 0 classes.
+- Zero `network -> timetable` imports remain.
 
-### 4. Re-enable Architecture Enforcement (small PR)
+### 4. Re-enable Architecture Enforcement — DONE (included in Phase 3)
 
-- Remove temporary cycle allowance in:
-  - `TimetableRepositoryArchitectureTest.java:60`
-  - `TimetableRepositoryArchitectureTest.java:91`
-- Re-enable `enforceNoCyclicDependencies`.
-- Add explicit rule: `NETWORK` must not depend on `TIMETABLE`.
+- Emptied grandfathered set in `TimetableRepositoryArchitectureTest`.
+- Removed `TIMETABLE` from `NETWORK` allowed dependencies.
+- Re-enabled `enforceNoCyclicDependencies` test (removed `@Disabled`).
 
 ### 5. Remove Transitional Compatibility Layer (final PR)
 
-- Remove temporary adapters/deprecations introduced during migration.
-- Re-run transit + realtime integration tests and speed tests.
+- No transitional compatibility layer was needed; all migration was done in-place.
+- Phase effectively complete as part of Phase 3.
 
 ## Acceptance Criteria
 
