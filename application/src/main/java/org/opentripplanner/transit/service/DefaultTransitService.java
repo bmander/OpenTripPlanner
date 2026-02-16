@@ -516,6 +516,11 @@ public class DefaultTransitService implements TransitEditorService {
     return timetableRepositoryIndex.getGroupOfRoutesForId(id);
   }
 
+  @Override
+  public Timetable getScheduledTimetable(TripPattern pattern) {
+    return timetableRepository.getScheduledTimetable(pattern);
+  }
+
   /**
    * Get the most up-to-date timetable for the given TripPattern, as of right now. There should
    * probably be a less awkward way to do this that just gets the latest entry from the resolver

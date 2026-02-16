@@ -49,6 +49,7 @@ import org.opentripplanner.transit.model.organization.Operator;
 import org.opentripplanner.transit.model.site.GroupStop;
 import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 import org.opentripplanner.updater.GraphUpdaterManager;
@@ -120,6 +121,7 @@ public class TimetableRepository implements Serializable {
   private boolean hasScheduledService = false;
 
   private final Map<FeedScopedId, TripPattern> tripPatternForId = new HashMap<>();
+  private final Map<FeedScopedId, Timetable> scheduledTimetableByPatternId = new HashMap<>();
   private final Map<FeedScopedId, TripOnServiceDate> tripOnServiceDates = new HashMap<>();
   private final ListMultimap<FeedScopedId, TripOnServiceDate> replacedByTripOnServiceDates =
     ArrayListMultimap.create();
@@ -419,6 +421,20 @@ public class TimetableRepository implements Serializable {
   public void addTripPattern(FeedScopedId id, TripPattern tripPattern) {
     invalidateIndex();
     tripPatternForId.put(id, tripPattern);
+    // Auto-populate the scheduled timetable map from the pattern during transition
+    scheduledTimetableByPatternId.put(id, tripPattern.getScheduledTimetable());
+  }
+
+  public void addScheduledTimetable(FeedScopedId patternId, Timetable timetable) {
+    scheduledTimetableByPatternId.put(patternId, timetable);
+  }
+
+  public Timetable getScheduledTimetable(FeedScopedId patternId) {
+    return scheduledTimetableByPatternId.get(patternId);
+  }
+
+  public Timetable getScheduledTimetable(TripPattern pattern) {
+    return scheduledTimetableByPatternId.get(pattern.getId());
   }
 
   public void addScheduledStopPointMapping(Map<FeedScopedId, RegularStop> mapping) {
