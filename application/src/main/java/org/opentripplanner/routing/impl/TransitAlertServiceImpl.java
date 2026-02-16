@@ -13,7 +13,7 @@ import org.opentripplanner.routing.alertpatch.EntitySelector;
 import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
 import org.opentripplanner.routing.services.TransitAlertService;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.service.TimetableRepository;
 
 /**

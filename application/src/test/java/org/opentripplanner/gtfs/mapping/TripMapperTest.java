@@ -20,7 +20,7 @@ import org.opentripplanner.graph_builder.issue.api.DataImportIssueStore;
 import org.opentripplanner.transit.model.basic.Accessibility;
 import org.opentripplanner.transit.model.network.BikeAccess;
 import org.opentripplanner.transit.model.network.CarAccess;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 
 public class TripMapperTest {
 

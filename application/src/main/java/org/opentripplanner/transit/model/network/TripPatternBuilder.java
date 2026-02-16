@@ -13,7 +13,7 @@ import org.opentripplanner.framework.geometry.GeometryUtils;
 import org.opentripplanner.transit.model.basic.SubMode;
 import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.transit.model.framework.AbstractEntityBuilder;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TimetableBuilder;
 

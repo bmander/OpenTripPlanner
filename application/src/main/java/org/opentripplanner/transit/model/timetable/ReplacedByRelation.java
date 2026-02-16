@@ -1,6 +1,4 @@
-package org.opentripplanner.transit.model.network;
-
-import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
+package org.opentripplanner.transit.model.timetable;
 
 public class ReplacedByRelation {
 

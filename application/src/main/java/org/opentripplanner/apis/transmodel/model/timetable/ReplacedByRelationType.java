@@ -4,7 +4,7 @@ import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
-import org.opentripplanner.transit.model.network.ReplacedByRelation;
+import org.opentripplanner.transit.model.timetable.ReplacedByRelation;
 
 public class ReplacedByRelationType {
 

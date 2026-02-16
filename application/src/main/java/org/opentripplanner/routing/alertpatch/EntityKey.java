@@ -1,7 +1,7 @@
 package org.opentripplanner.routing.alertpatch;
 
 import org.opentripplanner.core.model.id.FeedScopedId;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 
 /**
  * This encompasses many different kinds of entity keys, all of which are simple record types, all

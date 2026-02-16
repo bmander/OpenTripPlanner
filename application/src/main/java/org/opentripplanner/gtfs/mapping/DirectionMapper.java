@@ -2,7 +2,7 @@ package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.graph_builder.issue.api.DataImportIssueStore;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 
 public class DirectionMapper {
 

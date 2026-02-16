@@ -1,4 +1,4 @@
-package org.opentripplanner.transit.model.timetable;
+package org.opentripplanner.transit.model.basic;
 
 /**
  * The direction of travel for a TripPattern. This is mapped 1-to-1 in NeTEx, while in GTFS only

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.opentripplanner.core.model.id.FeedScopedId;
-import org.opentripplanner.transit.model.timetable.Direction;
+import org.opentripplanner.transit.model.basic.Direction;
 
 /**
  * Describes which elements in the internal transit data model are affected by a realtime alert.

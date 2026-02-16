@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.opentripplanner.core.model.id.FeedScopedId;
+import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.network.TripPattern;
 
 /**

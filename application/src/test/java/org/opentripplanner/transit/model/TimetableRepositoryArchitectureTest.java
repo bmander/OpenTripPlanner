@@ -38,8 +38,6 @@ public class TimetableRepositoryArchitectureTest {
   private static final Set<String> GRANDFATHERED_NETWORK_TO_TIMETABLE = Set.of(
     "org.opentripplanner.transit.model.network.TripPattern",
     "org.opentripplanner.transit.model.network.TripPatternBuilder",
-    "org.opentripplanner.transit.model.network.ReplacedByRelation",
-    "org.opentripplanner.transit.model.network.ReplacementForRelation",
     "org.opentripplanner.transit.model.network.grouppriority.TransitGroupPriorityService",
     "org.opentripplanner.transit.model.network.grouppriority.TripAdapter"
   );

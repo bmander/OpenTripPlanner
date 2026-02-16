@@ -35,12 +35,15 @@ After remediation, re-enable the cycle test in:
 - Update:
   - `application/src/test/java/org/opentripplanner/transit/model/TimetableRepositoryArchitectureTest.java`
 
-### 2. Remove Low-Risk Cross-Package Edges (small PR)
+### 2. Remove Low-Risk Cross-Package Edges (small PR) — DONE
 
-- Move shared primitives used by both sides out of `timetable` (start with `Direction`).
-- Move relation classes that are timetable-centric out of `network`:
-  - `ReplacedByRelation`
-  - `ReplacementForRelation`
+- Branch: `remove-low-risk-network-timetable-edges`
+- ~~Move shared primitives used by both sides out of `timetable` (start with `Direction`).~~
+  - `Direction` moved from `timetable` to `basic`.
+- ~~Move relation classes that are timetable-centric out of `network`:~~
+  - ~~`ReplacedByRelation`~~ — moved to `timetable`.
+  - ~~`ReplacementForRelation`~~ — moved to `timetable`.
+- Grandfathered set reduced from 6 → 4 classes.
 - Objective: reduce cycle surface area before touching core aggregate ownership.
 
 ### 3. Break Main Aggregate Coupling (core PR)
