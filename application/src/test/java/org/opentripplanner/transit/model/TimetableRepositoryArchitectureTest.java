@@ -1,5 +1,6 @@
 package org.opentripplanner.transit.model;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.opentripplanner.OtpArchitectureModules.FRAMEWORK;
 import static org.opentripplanner.OtpArchitectureModules.FRAMEWORK_UTILS;
@@ -11,6 +12,9 @@ import static org.opentripplanner.OtpArchitectureModules.RAPTOR_ADAPTER_API;
 import static org.opentripplanner.OtpArchitectureModules.RAPTOR_API;
 import static org.opentripplanner.OtpArchitectureModules.TRANSIT_MODEL;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
+import java.util.Set;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner._support.arch.ArchComponent;
@@ -26,6 +30,19 @@ public class TimetableRepositoryArchitectureTest {
   private static final Package TIMETABLE = TRANSIT_MODEL.subPackage("timetable");
   private static final Package TIMETABLE_BOOKING = TIMETABLE.subPackage("booking");
   private static final Package LEGACY_MODEL = OTP_ROOT.subPackage("model");
+
+  /**
+   * Grandfathered network classes that currently depend on timetable. No new classes should be
+   * added to this set. See doc/dev/transit-network-timetable-cycle-remediation-plan.md
+   */
+  private static final Set<String> GRANDFATHERED_NETWORK_TO_TIMETABLE = Set.of(
+    "org.opentripplanner.transit.model.network.TripPattern",
+    "org.opentripplanner.transit.model.network.TripPatternBuilder",
+    "org.opentripplanner.transit.model.network.ReplacedByRelation",
+    "org.opentripplanner.transit.model.network.ReplacementForRelation",
+    "org.opentripplanner.transit.model.network.grouppriority.TransitGroupPriorityService",
+    "org.opentripplanner.transit.model.network.grouppriority.TripAdapter"
+  );
 
   @Test
   void enforceFrameworkPackageDependencies() {
@@ -57,7 +74,8 @@ public class TimetableRepositoryArchitectureTest {
 
   @Test
   void enforceNetworkPackageDependencies() {
-    // TODO OTP2 temporarily allow circular dependency between network and timetable
+    // Timetable dependency is tracked for removal, see
+    // doc/dev/transit-network-timetable-cycle-remediation-plan.md
     NETWORK.dependsOn(
       FRAMEWORK_UTILS,
       GEO_UTILS,
@@ -88,13 +106,37 @@ public class TimetableRepositoryArchitectureTest {
   }
 
   @Test
-  // TODO OTP2 temporarily allow circular dependency between network and timetable
+  // Disabled until network<->timetable cycle is fully resolved, see
+  // doc/dev/transit-network-timetable-cycle-remediation-plan.md
   @Disabled
   void enforceNoCyclicDependencies() {
     slices()
       .matching(TRANSIT_MODEL.packageIdentifierAllSubPackages())
       .should()
       .beFreeOfCycles()
+      .check(ArchComponent.OTP_CLASSES);
+  }
+
+  /**
+   * Freeze test: prevent new network -> timetable dependencies from being introduced. Only the
+   * grandfathered classes listed in {@link #GRANDFATHERED_NETWORK_TO_TIMETABLE} are allowed to
+   * depend on timetable. See doc/dev/transit-network-timetable-cycle-remediation-plan.md
+   */
+  @Test
+  void noNewNetworkToTimetableDependencies() {
+    var notGrandfathered = DescribedPredicate.describe(
+      "not in the grandfathered network->timetable set",
+      (JavaClass javaClass) ->
+        !GRANDFATHERED_NETWORK_TO_TIMETABLE.contains(javaClass.getName())
+    );
+
+    noClasses()
+      .that()
+      .resideInAPackage("org.opentripplanner.transit.model.network..")
+      .and(notGrandfathered)
+      .should()
+      .dependOnClassesThat()
+      .resideInAPackage("org.opentripplanner.transit.model.timetable..")
       .check(ArchComponent.OTP_CLASSES);
   }
 }
