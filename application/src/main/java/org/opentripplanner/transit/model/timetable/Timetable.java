@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.transit.model.basic.Direction;
@@ -110,6 +111,15 @@ public class Timetable implements Serializable {
    */
   public List<FrequencyEntry> getFrequencyEntries() {
     return frequencyEntries;
+  }
+
+  /**
+   * Return all distinct trips in this timetable as a stream.
+   */
+  public Stream<Trip> tripsAsStream() {
+    var trips = tripTimes.stream().map(TripTimes::getTrip);
+    var freqTrips = frequencyEntries.stream().map(e -> e.tripTimes().getTrip());
+    return Stream.concat(trips, freqTrips).distinct();
   }
 
   /**
