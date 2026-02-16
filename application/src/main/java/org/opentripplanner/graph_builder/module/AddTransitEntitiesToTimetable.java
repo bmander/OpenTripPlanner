@@ -76,11 +76,18 @@ public class AddTransitEntitiesToTimetable {
 
   private void addTripPatterns(TimetableRepository timetableRepository) {
     Collection<TripPattern> tripPatterns = dataImport.getTripPatterns();
+    var timetableByPatternId = dataImport.getTimetableByPatternId();
 
     /* Loop over all new TripPatterns setting the service codes. */
     for (TripPattern tripPattern : tripPatterns) {
       // Store the tripPattern in the timetable repository so it will be serialized and usable in routing.
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
+
+      // Register the scheduled timetable from the import data
+      var timetable = timetableByPatternId.get(tripPattern.getId());
+      if (timetable != null) {
+        timetableRepository.addScheduledTimetable(tripPattern.getId(), timetable);
+      }
 
       // TODO this could be more elegant
       timetableRepository

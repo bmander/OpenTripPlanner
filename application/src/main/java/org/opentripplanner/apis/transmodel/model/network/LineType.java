@@ -164,14 +164,17 @@ public class LineType {
         GraphQLFieldDefinition.newFieldDefinition()
           .name("serviceJourneys")
           .type(new GraphQLNonNull(new GraphQLList(serviceJourneyType)))
-          .dataFetcher(environment ->
-            GqlUtil.getTransitService(environment)
+          .dataFetcher(environment -> {
+            var transitService = GqlUtil.getTransitService(environment);
+            return transitService
               .findPatterns(getSource(environment))
               .stream()
-              .flatMap(TripPattern::scheduledTripsAsStream)
+              .flatMap(pattern ->
+                transitService.getScheduledTimetable(pattern).tripsAsStream()
+              )
               .distinct()
-              .collect(Collectors.toList())
-          )
+              .collect(Collectors.toList());
+          })
           .build()
       )
       .field(

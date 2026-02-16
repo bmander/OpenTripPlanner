@@ -55,7 +55,9 @@ class TimetableRepositoryTest {
     TimetableRepositoryIndex timetableRepositoryIndex =
       timetableRepository.getTimetableRepositoryIndex();
     Trip trip = timetableRepositoryIndex.getTripForId(SAMPLE_TRIP_ID);
-    Timetable timetable = timetableRepositoryIndex.getPatternForTrip(trip).getScheduledTimetable();
+    Timetable timetable = timetableRepository.getScheduledTimetable(
+      timetableRepositoryIndex.getPatternForTrip(trip)
+    );
     assertEquals(20 * 60, timetable.getTripTimes(trip).getDepartureTime(0));
 
     // Should throw on second bundle, with different agency time zone
@@ -112,7 +114,9 @@ class TimetableRepositoryTest {
 
     // Then trip times should be on hour less than in input data
     Trip trip = timetableRepositoryIndex.getTripForId(SAMPLE_TRIP_ID);
-    Timetable timetable = timetableRepositoryIndex.getPatternForTrip(trip).getScheduledTimetable();
+    Timetable timetable = timetableRepository.getScheduledTimetable(
+      timetableRepositoryIndex.getPatternForTrip(trip)
+    );
     assertEquals(20 * 60 - 60 * 60, timetable.getTripTimes(trip).getDepartureTime(0));
   }
 
@@ -136,36 +140,30 @@ class TimetableRepositoryTest {
     var S23 = TimetableRepositoryForTest.of().stop("S23").build();
     var R1 = route("R1").withMode(TransitMode.BUS).build();
     var R2 = route("R2").withMode(TransitMode.BUS).build();
-    var TP1 = tripPattern("TP1", R1)
-      .withStopPattern(stopPattern(S11, S12, S13))
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(
-            ScheduledTripTimes.of()
-              .withTrip(TimetableRepositoryForTest.trip("T1").build())
-              .withDepartureTimes("00:00 01:00 02:00")
-              .build()
-          )
+    var TP1 = tripPattern("TP1", R1).withStopPattern(stopPattern(S11, S12, S13)).build();
+    var TT1 = Timetable.of()
+      .addTripTimes(
+        ScheduledTripTimes.of()
+          .withTrip(TimetableRepositoryForTest.trip("T1").build())
+          .withDepartureTimes("00:00 01:00 02:00")
           .build()
       )
       .build();
-    var TP2 = tripPattern("TP2", R2)
-      .withStopPattern(stopPattern(S21, S22, S23))
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(
-            ScheduledTripTimes.of()
-              .withTrip(
-                TimetableRepositoryForTest.trip("T2").withBikesAllowed(BikeAccess.ALLOWED).build()
-              )
-              .withDepartureTimes("00:00 01:00 02:00")
-              .build()
+    var TP2 = tripPattern("TP2", R2).withStopPattern(stopPattern(S21, S22, S23)).build();
+    var TT2 = Timetable.of()
+      .addTripTimes(
+        ScheduledTripTimes.of()
+          .withTrip(
+            TimetableRepositoryForTest.trip("T2").withBikesAllowed(BikeAccess.ALLOWED).build()
           )
+          .withDepartureTimes("00:00 01:00 02:00")
           .build()
       )
       .build();
     repo.addTripPattern(id("TP1"), TP1);
+    repo.addScheduledTimetable(id("TP1"), TT1);
     repo.addTripPattern(id("TP2"), TP2);
+    repo.addScheduledTimetable(id("TP2"), TT2);
     assertEquals(Set.of(S21, S22, S23), repo.getStopLocationsUsedForBikesAllowedTrips());
   }
 
@@ -180,36 +178,30 @@ class TimetableRepositoryTest {
     var S23 = TimetableRepositoryForTest.of().stop("S23").build();
     var R1 = route("R1").withMode(TransitMode.RAIL).build();
     var R2 = route("R2").withMode(TransitMode.RAIL).build();
-    var TP1 = tripPattern("TP1", R1)
-      .withStopPattern(stopPattern(S11, S12, S13))
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(
-            ScheduledTripTimes.of()
-              .withTrip(TimetableRepositoryForTest.trip("T1").build())
-              .withDepartureTimes("00:00 01:00 02:00")
-              .build()
-          )
+    var TP1 = tripPattern("TP1", R1).withStopPattern(stopPattern(S11, S12, S13)).build();
+    var TT1 = Timetable.of()
+      .addTripTimes(
+        ScheduledTripTimes.of()
+          .withTrip(TimetableRepositoryForTest.trip("T1").build())
+          .withDepartureTimes("00:00 01:00 02:00")
           .build()
       )
       .build();
-    var TP2 = tripPattern("TP2", R2)
-      .withStopPattern(stopPattern(S21, S22, S23))
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(
-            ScheduledTripTimes.of()
-              .withTrip(
-                TimetableRepositoryForTest.trip("T2").withCarsAllowed(CarAccess.ALLOWED).build()
-              )
-              .withDepartureTimes("00:00 01:00 02:00")
-              .build()
+    var TP2 = tripPattern("TP2", R2).withStopPattern(stopPattern(S21, S22, S23)).build();
+    var TT2 = Timetable.of()
+      .addTripTimes(
+        ScheduledTripTimes.of()
+          .withTrip(
+            TimetableRepositoryForTest.trip("T2").withCarsAllowed(CarAccess.ALLOWED).build()
           )
+          .withDepartureTimes("00:00 01:00 02:00")
           .build()
       )
       .build();
     repo.addTripPattern(id("TP1"), TP1);
+    repo.addScheduledTimetable(id("TP1"), TT1);
     repo.addTripPattern(id("TP2"), TP2);
+    repo.addScheduledTimetable(id("TP2"), TT2);
     assertEquals(Set.of(S21, S22, S23), repo.getStopLocationsUsedForCarsAllowedTrips());
   }
 }

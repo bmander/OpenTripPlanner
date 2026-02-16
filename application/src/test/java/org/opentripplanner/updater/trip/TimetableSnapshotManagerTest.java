@@ -8,6 +8,7 @@ import static org.opentripplanner.updater.trip.TimetableSnapshotManagerTest.Same
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +18,7 @@ import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.timetable.RealTimeTripUpdate;
 import org.opentripplanner.transit.model.timetable.ScheduledTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TimetableSnapshot;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 import org.opentripplanner.updater.TimetableSnapshotParameters;
@@ -42,6 +44,9 @@ class TimetableSnapshotManagerTest {
   private static final TripTimes TRIP_TIMES = ScheduledTripTimes.of()
     .withArrivalTimes("00:00 00:01")
     .withTrip(TimetableRepositoryForTest.trip("trip").build())
+    .build();
+  private static final Timetable SCHEDULED_TIMETABLE = Timetable.of()
+    .withTripPattern(PATTERN)
     .build();
 
   enum SameAssert {
@@ -85,7 +90,8 @@ class TimetableSnapshotManagerTest {
     var snapshotManager = new TimetableSnapshotManager(
       null,
       TimetableSnapshotParameters.DEFAULT.withPurgeExpiredData(purgeExpiredData),
-      clock::get
+      clock::get,
+      Map.of(PATTERN.getId(), SCHEDULED_TIMETABLE)
     );
 
     var res1 = snapshotManager.updateBuffer(new RealTimeTripUpdate(PATTERN, TRIP_TIMES, YESTERDAY));

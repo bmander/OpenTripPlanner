@@ -275,15 +275,20 @@ class StreetLinkerModuleTest {
         .toList();
       StopPattern stopPattern = new StopPattern(stopTimes);
       var tripTimes = TripTimesFactory.tripTimes(trip, stopTimes, DeduplicatorService.NOOP);
+      var timetable = Timetable.of().addTripTimes(tripTimes).build();
+      var tripHeadsign = timetable.getRepresentativeTripTimes() != null
+        ? timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+        : null;
       TripPattern tripPattern = TimetableRepositoryForTest.tripPattern(
         "carsAllowedTripPattern",
         route
       )
         .withStopPattern(stopPattern)
-        .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
+        .withTripHeadsign(tripHeadsign)
         .build();
 
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
+      timetableRepository.addScheduledTimetable(tripPattern.getId(), timetable);
     }
 
     /**

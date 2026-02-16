@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,6 +29,8 @@ import org.opentripplanner.transit.model.timetable.TripTimesFactory;
 class InterlineProcessorTest implements PlanTestConstants {
 
   private static TimetableRepositoryForTest TEST_MODEL = TimetableRepositoryForTest.of();
+
+  private final Map<FeedScopedId, Timetable> timetableByPatternId = new HashMap<>();
 
   List<TripPattern> patterns = List.of(
     tripPattern("trip-1", "block-1", "service-1"),
@@ -111,7 +115,7 @@ class InterlineProcessorTest implements PlanTestConstants {
       100,
       DataImportIssueStore.NOOP,
       calendarServiceData,
-      TripPattern::getScheduledTimetable
+      p -> timetableByPatternId.get(p.getId())
     );
 
     var createdTransfers = processor.run(patterns);
@@ -127,8 +131,16 @@ class InterlineProcessorTest implements PlanTestConstants {
   void staySeatedNotAllowed() {
     var transferService = new DefaultConstrainedTransferService();
 
-    var fromTrip = patterns.get(0).getScheduledTimetable().getTripTimes().get(0).getTrip();
-    var toTrip = patterns.get(1).getScheduledTimetable().getTripTimes().get(0).getTrip();
+    var fromTrip = timetableByPatternId
+      .get(patterns.get(0).getId())
+      .getTripTimes()
+      .get(0)
+      .getTrip();
+    var toTrip = timetableByPatternId
+      .get(patterns.get(1).getId())
+      .getTripTimes()
+      .get(0)
+      .getTrip();
     var notAllowed = new StaySeatedNotAllowed(fromTrip, toTrip);
 
     var calendarService = new CalendarServiceData();
@@ -143,7 +155,7 @@ class InterlineProcessorTest implements PlanTestConstants {
       100,
       DataImportIssueStore.NOOP,
       calendarService,
-      TripPattern::getScheduledTimetable
+      p -> timetableByPatternId.get(p.getId())
     );
 
     var createdTransfers = processor.run(patterns);
@@ -152,7 +164,7 @@ class InterlineProcessorTest implements PlanTestConstants {
     assertEquals(transferService.listAll(), createdTransfers);
   }
 
-  private static TripPattern tripPattern(String tripId, String blockId, String serviceId) {
+  private TripPattern tripPattern(String tripId, String blockId, String serviceId) {
     var trip = TimetableRepositoryForTest.trip(tripId)
       .withGtfsBlockId(blockId)
       .withServiceId(new FeedScopedId("1", serviceId))
@@ -166,10 +178,18 @@ class InterlineProcessorTest implements PlanTestConstants {
     var stopPattern = new StopPattern(stopTimes);
 
     var tripTimes = TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator());
-    return TripPattern.of(TimetableRepositoryForTest.id(tripId))
+    var timetable = Timetable.of().addTripTimes(tripTimes).build();
+    var tripHeadsign = timetable.getRepresentativeTripTimes() != null
+      ? timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+      : null;
+    var patternId = TimetableRepositoryForTest.id(tripId);
+    var pattern = TripPattern.of(patternId)
       .withRoute(trip.getRoute())
       .withStopPattern(stopPattern)
-      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
+      .withTripHeadsign(tripHeadsign)
       .build();
+    timetable.setPattern(pattern);
+    timetableByPatternId.put(patternId, timetable);
+    return pattern;
   }
 }

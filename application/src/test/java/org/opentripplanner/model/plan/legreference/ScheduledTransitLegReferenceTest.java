@@ -93,14 +93,15 @@ class ScheduledTransitLegReferenceTest {
         TEST_MODEL.stopTimesEvery5Minutes(item.getValue().getSize(), trip, "11:00"),
         new Deduplicator()
       ).withServiceCode(SERVICE_CODE);
+      var scheduledTimetable = Timetable.of().addTripTimes(tripTimes).build();
       TripPattern tripPattern = TimetableRepositoryForTest.tripPattern(
         "TRIP_PATTERN_" + item.getKey().getId(),
         TimetableRepositoryForTest.route(id("1")).build()
       )
         .withStopPattern(item.getValue())
-        .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
         .build();
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
+      timetableRepository.addScheduledTimetable(tripPattern.getId(), scheduledTimetable);
       timetableRepository.getServiceCodes().put(tripPattern.getId(), SERVICE_CODE);
       FeedScopedId tripOnServiceDateId = id("TRIP_ON_SERVICE_DATE" + item.getKey().getId());
       timetableRepository.addTripOnServiceDate(

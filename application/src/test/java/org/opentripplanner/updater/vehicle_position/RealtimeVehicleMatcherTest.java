@@ -99,7 +99,7 @@ public class RealtimeVehicleMatcherTest {
       TimetableRepositoryForTest.FEED_ID,
       ignored -> trip2,
       ignored -> pattern,
-      TripPattern::getScheduledTimetable,
+      SCHEDULED_TIMETABLES::get,
       (id, time) -> pattern,
       service,
       zoneId,
@@ -137,7 +137,7 @@ public class RealtimeVehicleMatcherTest {
       TimetableRepositoryForTest.FEED_ID,
       tripForId::get,
       patternForTrip::get,
-      TripPattern::getScheduledTimetable,
+      SCHEDULED_TIMETABLES::get,
       (id, time) -> patternForTrip.get(id),
       service,
       zoneId,
@@ -195,7 +195,7 @@ public class RealtimeVehicleMatcherTest {
       TimetableRepositoryForTest.FEED_ID,
       tripForId::get,
       patternForTrip::get,
-      TripPattern::getScheduledTimetable,
+      SCHEDULED_TIMETABLES::get,
       (id, time) -> patternForTrip.get(id),
       service,
       zoneId,
@@ -244,7 +244,7 @@ public class RealtimeVehicleMatcherTest {
       TimetableRepositoryForTest.FEED_ID,
       tripForId::get,
       patternForTrip::get,
-      TripPattern::getScheduledTimetable,
+      SCHEDULED_TIMETABLES::get,
       (id, time) -> patternForTrip.get(id),
       service,
       zoneId,
@@ -301,7 +301,7 @@ public class RealtimeVehicleMatcherTest {
       TimetableRepositoryForTest.FEED_ID,
       tripForId::get,
       patternForTrip::get,
-      TripPattern::getScheduledTimetable,
+      SCHEDULED_TIMETABLES::get,
       (id, time) -> patternForTrip.get(id),
       service,
       zoneId,
@@ -379,17 +379,19 @@ public class RealtimeVehicleMatcherTest {
     assertEquals(LocalDate.parse("2022-04-04"), inferredDate);
   }
 
+  private static final Map<TripPattern, Timetable> SCHEDULED_TIMETABLES = new java.util.HashMap<>();
+
   private static TripPattern tripPattern(Trip trip, List<StopTime> stopTimes) {
     var stopPattern = new StopPattern(stopTimes);
+    var timetable = Timetable.of()
+      .addTripTimes(TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator()))
+      .build();
     var pattern = TripPattern.of(trip.getId())
       .withStopPattern(stopPattern)
       .withRoute(ROUTE)
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator()))
-          .build()
-      )
       .build();
+    timetable.setPattern(pattern);
+    SCHEDULED_TIMETABLES.put(pattern, timetable);
     return pattern;
   }
 

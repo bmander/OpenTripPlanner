@@ -58,22 +58,26 @@ public class TripTimesUpdaterTest {
   private static Timetable timetable;
   private static String feedId;
   private static FeedScopedId tripId;
+  private static TimetableRepository timetableRepository;
 
   @BeforeAll
   public static void setUp() throws Exception {
     TestOtpModel model = ConstantsForTests.buildGtfsGraph(ConstantsForTests.SIMPLE_GTFS);
-    TimetableRepository timetableRepository = model.timetableRepository();
+    timetableRepository = model.timetableRepository();
 
     feedId = timetableRepository.getFeedIds().stream().findFirst().get();
     patternIndex = new HashMap<>();
 
     for (TripPattern pattern : timetableRepository.getAllTripPatterns()) {
-      pattern.scheduledTripsAsStream().forEach(trip -> patternIndex.put(trip.getId(), pattern));
+      timetableRepository
+        .getScheduledTimetable(pattern)
+        .tripsAsStream()
+        .forEach(trip -> patternIndex.put(trip.getId(), pattern));
     }
 
     tripId = new FeedScopedId(feedId, TRIP_ID);
     TripPattern pattern = patternIndex.get(tripId);
-    timetable = pattern.getScheduledTimetable();
+    timetable = timetableRepository.getScheduledTimetable(pattern);
   }
 
   @Test
@@ -1053,9 +1057,9 @@ public class TripTimesUpdaterTest {
 
     GtfsRealtime.TripUpdate tripUpdate = tripUpdateBuilder.build();
 
-    var scheduledTimetable = patternIndex
-      .get(new FeedScopedId(feedId, TRIP_ID_WITH_MORE_STOPS))
-      .getScheduledTimetable();
+    var scheduledTimetable = timetableRepository.getScheduledTimetable(
+      patternIndex.get(new FeedScopedId(feedId, TRIP_ID_WITH_MORE_STOPS))
+    );
     var patch = TRIP_TIMES_UPDATER.createUpdatedTripTimesFromGtfsRt(
       scheduledTimetable,
       new TripUpdate(feedId, tripUpdate, NOW),
@@ -1115,9 +1119,9 @@ public class TripTimesUpdaterTest {
 
     GtfsRealtime.TripUpdate tripUpdate = tripUpdateBuilder.build();
 
-    var scheduledTimetable = patternIndex
-      .get(new FeedScopedId(feedId, TRIP_ID_WITH_MORE_STOPS))
-      .getScheduledTimetable();
+    var scheduledTimetable = timetableRepository.getScheduledTimetable(
+      patternIndex.get(new FeedScopedId(feedId, TRIP_ID_WITH_MORE_STOPS))
+    );
 
     var patch = TRIP_TIMES_UPDATER.createUpdatedTripTimesFromGtfsRt(
       scheduledTimetable,

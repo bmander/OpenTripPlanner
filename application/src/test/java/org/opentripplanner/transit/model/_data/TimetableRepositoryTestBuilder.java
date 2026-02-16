@@ -26,6 +26,7 @@ import org.opentripplanner.transit.model.organization.Operator;
 import org.opentripplanner.transit.model.organization.OperatorBuilder;
 import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripBuilder;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
@@ -46,6 +47,7 @@ public class TimetableRepositoryTestBuilder {
   private final List<UnscheduledTrip> flexTrips = new ArrayList<>();
 
   private final Map<TripPatternKey, TripPattern> tripPatterns = new HashMap<>();
+  private final Map<FeedScopedId, Timetable> timetables = new HashMap<>();
   private final Map<String, ServiceCode> serviceCodes = new HashMap<>();
 
   private final Map<FeedScopedId, RegularStop> scheduledStopPointMapping = new HashMap<>();
@@ -78,6 +80,18 @@ public class TimetableRepositoryTestBuilder {
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
     }
 
+    for (var entry : timetables.entrySet()) {
+      timetableRepository.addScheduledTimetable(entry.getKey(), entry.getValue());
+    }
+
+    // Ensure all timetables have their pattern back-reference set
+    for (TripPattern tripPattern : tripPatterns.values()) {
+      var timetable = timetableRepository.getScheduledTimetable(tripPattern);
+      if (timetable != null && timetable.getPattern() == null) {
+        timetable.setPattern(tripPattern);
+      }
+    }
+
     for (var flexTrip : flexTrips) {
       timetableRepository.addFlexTrip(flexTrip.getId(), flexTrip);
     }
@@ -95,17 +109,9 @@ public class TimetableRepositoryTestBuilder {
     }
     timetableRepository.updateCalendarServiceData(calendarServiceData);
 
-    timetableRepository
-      .getAllTripPatterns()
-      .forEach(pattern -> {
-        pattern.getScheduledTimetable().setServiceCodes(timetableRepository.getServiceCodes());
-      });
-
-    timetableRepository
-      .getAllTripPatterns()
-      .forEach(pattern -> {
-        pattern.getScheduledTimetable().setServiceCodes(timetableRepository.getServiceCodes());
-      });
+    timetables.forEach((patternId, timetable) -> {
+      timetable.setServiceCodes(timetableRepository.getServiceCodes());
+    });
 
     timetableRepository.addScheduledStopPointMapping(scheduledStopPointMapping);
 
@@ -227,11 +233,13 @@ public class TimetableRepositoryTestBuilder {
   }
 
   private void addTripTimesToPattern(TripPattern tripPattern, TripTimes tripTimes) {
-    var existingTimetable = tripPattern.getScheduledTimetable();
-    var timetableBuilder = existingTimetable.copyOf();
+    var existingTimetable = timetables.get(tripPattern.getId());
+    var timetableBuilder = existingTimetable != null
+      ? existingTimetable.copyOf()
+      : Timetable.of();
     timetableBuilder.addTripTimes(tripTimes);
-    var newPattern = tripPattern.copy().withScheduledTimeTable(timetableBuilder.build()).build();
-    tripPatterns.put(TripPatternKey.of(newPattern), newPattern);
+    var newTimetable = timetableBuilder.build();
+    timetables.put(tripPattern.getId(), newTimetable);
   }
 
   private TripPattern getOrCreateTripPattern(StopPattern stopPattern, Route route) {

@@ -118,7 +118,7 @@ public class DefaultTransitService implements TransitEditorService {
   public Optional<List<TripTimeOnDate>> getScheduledTripTimes(Trip trip) {
     TripPattern tripPattern = findPattern(trip);
     return Optional.ofNullable(
-      TripTimeOnDate.fromTripTimes(timetableRepository.getScheduledTimetable(tripPattern), trip)
+      TripTimeOnDate.fromTripTimes(getScheduledTimetable(tripPattern), trip)
     );
   }
 
@@ -518,7 +518,15 @@ public class DefaultTransitService implements TransitEditorService {
 
   @Override
   public Timetable getScheduledTimetable(TripPattern pattern) {
-    return timetableRepository.getScheduledTimetable(pattern);
+    var timetable = timetableRepository.getScheduledTimetable(pattern);
+    if (timetable != null) {
+      return timetable;
+    }
+    // For real-time added patterns, the scheduled timetable may be stored in the snapshot
+    if (timetableSnapshot != null) {
+      return timetableSnapshot.resolve(pattern, null);
+    }
+    return null;
   }
 
   /**

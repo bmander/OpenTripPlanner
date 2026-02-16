@@ -46,18 +46,20 @@ public class LegacyTimetableSnapshotIntegrationTest {
   public static final LocalDate SERVICE_DATE = LocalDate.of(2024, 1, 1);
   private static Map<FeedScopedId, TripPattern> patternIndex;
   static String feedId;
+  private static TimetableRepository timetableRepository;
 
   @BeforeAll
   public static void setUp() throws Exception {
     TestOtpModel model = ConstantsForTests.buildGtfsGraph(ConstantsForTests.SIMPLE_GTFS);
-    TimetableRepository timetableRepository = model.timetableRepository();
+    timetableRepository = model.timetableRepository();
 
     feedId = timetableRepository.getFeedIds().iterator().next();
 
     patternIndex = new HashMap<>();
     for (TripPattern tripPattern : timetableRepository.getAllTripPatterns()) {
-      tripPattern
-        .scheduledTripsAsStream()
+      timetableRepository
+        .getScheduledTimetable(tripPattern)
+        .tripsAsStream()
         .forEach(trip -> patternIndex.put(trip.getId(), tripPattern));
     }
   }
@@ -69,6 +71,7 @@ public class LegacyTimetableSnapshotIntegrationTest {
     LocalDate tomorrow = today.plusDays(1);
     TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
     TimetableSnapshot resolver = new TimetableSnapshot();
+    resolver.initScheduledTimetables(timetableRepository.getScheduledTimetableMap());
 
     Timetable scheduled = resolver.resolve(pattern, today);
     assertEquals(scheduled, resolver.resolve(pattern, null));
@@ -117,6 +120,7 @@ public class LegacyTimetableSnapshotIntegrationTest {
     TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
 
     TimetableSnapshot resolver = new TimetableSnapshot();
+    resolver.initScheduledTimetables(timetableRepository.getScheduledTimetableMap());
     Timetable origNow = resolver.resolve(pattern, today);
 
     TripDescriptor.Builder tripDescriptorBuilder = TripDescriptor.newBuilder();
@@ -168,6 +172,7 @@ public class LegacyTimetableSnapshotIntegrationTest {
       TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
 
       TimetableSnapshot resolver = new TimetableSnapshot();
+      resolver.initScheduledTimetables(timetableRepository.getScheduledTimetableMap());
 
       // only return a new snapshot if there are changes
       TimetableSnapshot snapshot = resolver.commit();
@@ -245,6 +250,7 @@ public class LegacyTimetableSnapshotIntegrationTest {
     GtfsRealtime.TripUpdate tripUpdate = tripUpdateBuilder.build();
 
     TimetableSnapshot resolver = new TimetableSnapshot();
+    resolver.initScheduledTimetables(timetableRepository.getScheduledTimetableMap());
     updateSnapshot(resolver, pattern, tripUpdate, today);
     updateSnapshot(resolver, pattern, tripUpdate, yesterday);
 
@@ -270,7 +276,7 @@ public class LegacyTimetableSnapshotIntegrationTest {
     GtfsRealtime.TripUpdate tripUpdate,
     LocalDate serviceDate
   ) {
-    final Timetable scheduledTimetable = pattern.getScheduledTimetable();
+    final Timetable scheduledTimetable = timetableRepository.getScheduledTimetable(pattern);
     var ttUpdater = new TripTimesUpdater(TIME_ZONE, new Deduplicator());
     var result = ttUpdater.createUpdatedTripTimesFromGtfsRt(
       scheduledTimetable,

@@ -38,15 +38,14 @@ class StopTimesHelperTest {
     var originalPattern = transitService.findPattern(
       transitService.getTrip(new FeedScopedId(feedId, "5.1"))
     );
-    var tt = originalPattern.getScheduledTimetable();
+    var tt = timetableRepository.getScheduledTimetable(originalPattern);
     var newTripTimes = tt.getTripTimes().getFirst().createRealTimeFromScheduledTimes();
     newTripTimes.cancelTrip();
-    pattern = originalPattern
-      .copy()
-      .withScheduledTimeTable(tt.copyOf().addOrUpdateTripTimes(newTripTimes.build()).build())
-      .build();
+    pattern = originalPattern.copy().build();
+    var updatedTimetable = tt.copyOf().addOrUpdateTripTimes(newTripTimes.build()).build();
     // replace the original pattern by the updated pattern in the transit model
     timetableRepository.addTripPattern(pattern.getId(), pattern);
+    timetableRepository.addScheduledTimetable(pattern.getId(), updatedTimetable);
     timetableRepository.index();
     transitService = new DefaultTransitService(timetableRepository);
     stopTimesHelper = new StopTimesHelper(transitService);

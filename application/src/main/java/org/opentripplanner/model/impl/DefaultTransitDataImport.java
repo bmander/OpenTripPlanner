@@ -18,6 +18,7 @@ import org.opentripplanner.transit.model.framework.AbstractTransitEntity;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.organization.Operator;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.site.BoardingArea;
 import org.opentripplanner.transit.model.site.Pathway;
 import org.opentripplanner.transit.model.site.PathwayNode;
@@ -59,6 +60,8 @@ class DefaultTransitDataImport implements TransitDataImport {
 
   private final Collection<TripPattern> tripPatterns;
 
+  private final Map<FeedScopedId, Timetable> timetableByPatternId;
+
   private final Collection<Trip> trips;
 
   private final Collection<TripOnServiceDate> tripOnServiceDates;
@@ -81,6 +84,7 @@ class DefaultTransitDataImport implements TransitDataImport {
     this.boardingAreasById = builder.getBoardingAreas().asImmutableMap();
     this.transfers = immutableList(builder.getTransfers());
     this.tripPatterns = immutableList(builder.getTripPatterns().values());
+    this.timetableByPatternId = Collections.unmodifiableMap(builder.getTimetableByPatternId());
     this.trips = immutableList(builder.getTripsById().values());
     this.tripOnServiceDates = immutableList(builder.getTripOnServiceDates().values());
     this.flexTrips = immutableList(builder.getFlexTripsById().values());
@@ -146,6 +150,11 @@ class DefaultTransitDataImport implements TransitDataImport {
   @Override
   public Collection<TripPattern> getTripPatterns() {
     return tripPatterns;
+  }
+
+  @Override
+  public Map<FeedScopedId, Timetable> getTimetableByPatternId() {
+    return timetableByPatternId;
   }
 
   @Override

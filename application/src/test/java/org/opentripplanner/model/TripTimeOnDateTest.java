@@ -162,11 +162,10 @@ class TripTimeOnDateTest {
       .withTrip(trip)
       .withDepartureTimes(new int[] { 0, 1 })
       .build();
-    var tripPattern = testModel
-      .pattern(TransitMode.BUS)
-      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
-      .build();
+    var scheduledTimetable = Timetable.of().addTripTimes(tripTimes).build();
+    var tripPattern = testModel.pattern(TransitMode.BUS).build();
     timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
+    timetableRepository.addScheduledTimetable(tripPattern.getId(), scheduledTimetable);
     timetableRepository.index();
     var timetableSnapshot = new TimetableSnapshot();
     timetableSnapshot.commit();

@@ -40,6 +40,7 @@ public class TestRouteData {
   private final Map<Trip, TripSchedule> tripSchedulesByTrip = new HashMap<>();
   private final RaptorTimeTable<TripSchedule> timetable;
   private final TripPattern tripPattern;
+  private final Timetable scheduledTimetable;
   private Trip currentTrip;
 
   public TestRouteData(Route route, List<RegularStop> stops, List<String> times) {
@@ -57,11 +58,12 @@ public class TestRouteData {
       .map(tripTimesByTrip::get)
       .collect(Collectors.toList());
 
+    this.scheduledTimetable = Timetable.of().addAllTripTimes(tripTimes).build();
     tripPattern = TripPattern.of(TimetableRepositoryForTest.id("TP:" + route))
       .withRoute(this.route)
       .withStopPattern(new StopPattern(stopTimesFistTrip))
-      .withScheduledTimeTable(Timetable.of().addAllTripTimes(tripTimes).build())
       .build();
+    scheduledTimetable.setPattern(tripPattern);
 
     RoutingTripPattern routingTripPattern = tripPattern.getRoutingTripPattern();
 
@@ -146,6 +148,10 @@ public class TestRouteData {
 
   public TripPattern getTripPattern() {
     return tripPattern;
+  }
+
+  public Timetable getScheduledTimetable() {
+    return scheduledTimetable;
   }
 
   public int stopPosition(StopLocation stop) {

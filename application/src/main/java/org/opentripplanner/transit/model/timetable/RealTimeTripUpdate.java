@@ -20,6 +20,9 @@ import org.opentripplanner.transit.model.network.TripPattern;
  * @param routeCreation          true if an added trip cannot be registered under an existing route
  *                               and a new route must be created.
  * @param producer               the producer of the real-time update.
+ * @param scheduledTimetable     optionally, the scheduled timetable for a newly created pattern.
+ *                               Required for patterns created in real-time so that the timetable
+ *                               snapshot can resolve the scheduled timetable.
  */
 public record RealTimeTripUpdate(
   TripPattern pattern,
@@ -28,7 +31,8 @@ public record RealTimeTripUpdate(
   @Nullable TripOnServiceDate addedTripOnServiceDate,
   boolean tripCreation,
   boolean routeCreation,
-  @Nullable String producer
+  @Nullable String producer,
+  @Nullable Timetable scheduledTimetable
 ) {
   public RealTimeTripUpdate {
     Objects.requireNonNull(pattern);
@@ -55,7 +59,7 @@ public record RealTimeTripUpdate(
     TripTimes updatedTripTimes,
     LocalDate serviceDate
   ) {
-    this(pattern, updatedTripTimes, serviceDate, null, false, false, null);
+    this(pattern, updatedTripTimes, serviceDate, null, false, false, null, null);
   }
 
   public RealTimeTripUpdate(
@@ -73,6 +77,7 @@ public record RealTimeTripUpdate(
       addedTripOnServiceDate,
       tripCreation,
       routeCreation,
+      null,
       null
     );
   }

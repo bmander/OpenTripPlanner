@@ -99,15 +99,11 @@ class TransitGroupPriorityServiceTest {
     assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullTrip));
     assertEquals(
       EXP_GROUP_1,
-      subject.lookupTransitGroupPriorityId(
-        busB2.getScheduledTimetable().getTripTimes().getFirst().getTrip()
-      )
+      subject.lookupTransitGroupPriorityId(routeB2.firstTrip().trip())
     );
     assertEquals(
       EXP_GROUP_2,
-      subject.lookupTransitGroupPriorityId(
-        railR3.getScheduledTimetable().getTripTimes().getFirst().getTrip()
-      )
+      subject.lookupTransitGroupPriorityId(routeR3.firstTrip().trip())
     );
   }
 
@@ -133,9 +129,7 @@ class TransitGroupPriorityServiceTest {
     assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullTrip));
     assertEquals(
       EXP_GROUP_2,
-      subject.lookupTransitGroupPriorityId(
-        railR1.getScheduledTimetable().getTripTimes().getFirst().getTrip()
-      )
+      subject.lookupTransitGroupPriorityId(routeR1.firstTrip().trip())
     );
   }
 

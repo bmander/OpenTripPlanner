@@ -13,6 +13,7 @@ import static org.opentripplanner.transfer.constrained.model.TransferConstraint.
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner.core.model.id.FeedScopedId;
@@ -455,8 +456,14 @@ public class ConstrainedBoardingSearchTest {
   private ConstrainedTransfersForPatterns generateTransfersForPatterns(
     Collection<ConstrainedTransfer> txList
   ) {
+    var timetables = Map.of(
+      pattern1,
+      route1.getScheduledTimetable(),
+      pattern2,
+      route2.getScheduledTimetable()
+    );
     return new TransferIndexGenerator(txList, List.of(pattern1, pattern2), p ->
-      p.scheduledTripsAsStream().toList()
+      timetables.get(p).tripsAsStream().toList()
     ).generateTransfers();
   }
 }

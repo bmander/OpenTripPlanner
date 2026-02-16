@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
@@ -25,9 +24,6 @@ import org.opentripplanner.transit.model.framework.AbstractTransitEntity;
 import org.opentripplanner.transit.model.framework.LogInfo;
 import org.opentripplanner.transit.model.site.Station;
 import org.opentripplanner.transit.model.site.StopLocation;
-import org.opentripplanner.transit.model.timetable.Timetable;
-import org.opentripplanner.transit.model.timetable.Trip;
-import org.opentripplanner.transit.model.timetable.TripTimes;
 
 // TODO OTP2 instances of this class are still mutable after construction with a builder, this will be refactored in a subsequent step
 /**
@@ -76,17 +72,6 @@ public final class TripPattern
    */
   private final StopPattern stopPattern;
 
-  /**
-   * TripPatterns hold a reference to a Timetable (i.e. TripTimes for all Trips in the pattern) for
-   * only scheduled trips from the GTFS or NeTEx data. If any trips were later updated in real time,
-   * there will be another Timetable holding those updates and reading through to the scheduled one.
-   * That other realtime Timetable is retrieved from a TimetableSnapshot (see end of Javadoc on
-   * TimetableSnapshot for more details).
-   * TODO RT_AB: The above system should be changed to integrate realtime and scheduled data more
-   *   closely. The Timetable may become obsolete or change significantly when they are integrated.
-   */
-  private final Timetable scheduledTimetable;
-
   // This TransitMode is arguably a redundant replication/memoization of information on the Route.
   // It appears that in the TripPatternBuilder it is only ever set from a Trip which is itself set
   // from a Route. This does not just read through to Route because in Netex trips may override
@@ -127,22 +112,12 @@ public final class TripPattern
     this.netexSubMode = requireNonNull(builder.getNetexSubmode());
     this.containsMultipleModes = builder.getContainsMultipleModes();
 
-    if (builder.getScheduledTimetable() != null) {
-      this.scheduledTimetable = builder.getScheduledTimetable();
-    } else {
-      this.scheduledTimetable = Timetable.of().build();
-    }
-    // Always set the pattern back-reference to this instance.
-    // This ensures the timetable points to the correct pattern even when the timetable
-    // was copied from another pattern (e.g., via Timetable.copyOf()).
-    this.scheduledTimetable.setPattern(this);
-
     this.originalTripPattern = builder.getOriginalTripPattern();
 
-    // Pre-compute trip headsign from the scheduled timetable
-    var representativeTripTimes = scheduledTimetable.getRepresentativeTripTimes();
-    if (representativeTripTimes != null) {
-      this.tripHeadsign = representativeTripTimes.getTripHeadsign();
+    // Trip headsign is pre-computed externally and passed via the builder.
+    // When not explicitly set, fall back to the original pattern's headsign.
+    if (builder.getTripHeadsign() != null) {
+      this.tripHeadsign = builder.getTripHeadsign();
     } else if (
       originalTripPattern != null && stopPattern.stopsEqual(originalTripPattern.getStopPattern())
     ) {
@@ -376,8 +351,6 @@ public final class TripPattern
     return getBoardType(stopPos).is(value) && getAlightType(stopPos).is(value);
   }
 
-  /* METHODS THAT DELEGATE TO THE SCHEDULED TIMETABLE */
-
   /**
    * Checks that this is TripPattern is based off the provided TripPattern and contains the same stops
    * (but not necessarily with same pickup and dropoff values).
@@ -399,30 +372,6 @@ public final class TripPattern
    */
   public Direction getDirection() {
     return direction;
-  }
-
-  /**
-   * This pattern may have multiple Timetable objects, but they should all contain TripTimes for the
-   * same trips, in the same order (that of the scheduled Timetable). An exception to this rule may
-   * arise if unscheduled trips are added to a Timetable. For that case we need to search for
-   * trips/TripIds in the Timetable rather than the enclosing TripPattern.
-   */
-  public Stream<Trip> scheduledTripsAsStream() {
-    var trips = scheduledTimetable.getTripTimes().stream().map(TripTimes::getTrip);
-    var freqTrips = scheduledTimetable
-      .getFrequencyEntries()
-      .stream()
-      .map(e -> e.tripTimes().getTrip());
-    return Stream.concat(trips, freqTrips).distinct();
-  }
-
-  /**
-   * This is the "original" timetable holding the scheduled stop times from GTFS, with no realtime
-   * updates applied. If realtime stoptime updates are applied, next/previous departure searches
-   * will be conducted using a different, updated timetable in a snapshot.
-   */
-  public Timetable getScheduledTimetable() {
-    return scheduledTimetable;
   }
 
   /**
@@ -539,7 +488,8 @@ public final class TripPattern
       Objects.equals(this.containsMultipleModes, other.containsMultipleModes) &&
       Objects.equals(this.name, other.name) &&
       Objects.equals(this.stopPattern, other.stopPattern) &&
-      Objects.equals(this.scheduledTimetable, other.scheduledTimetable)
+      Objects.equals(this.direction, other.direction) &&
+      Objects.equals(this.tripHeadsign, other.tripHeadsign)
     );
   }
 

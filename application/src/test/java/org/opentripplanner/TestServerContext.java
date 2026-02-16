@@ -92,7 +92,8 @@ public class TestServerContext {
       snapshotManager = new TimetableSnapshotManager(
         null,
         TimetableSnapshotParameters.DEFAULT,
-        LocalDate::now
+        LocalDate::now,
+        timetableRepository.getScheduledTimetableMap()
       );
     }
 

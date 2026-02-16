@@ -224,15 +224,17 @@ class GenerateTripPatternsOperationTest {
     generateTripPatternsOperation.run();
 
     Assertions.assertEquals(1, transitServiceBuilder.getTripPatterns().size());
+    var firstPattern = transitServiceBuilder
+      .getTripPatterns()
+      .values()
+      .stream()
+      .findFirst()
+      .orElseThrow();
     Assertions.assertEquals(
       2,
       transitServiceBuilder
-        .getTripPatterns()
-        .values()
-        .stream()
-        .findFirst()
-        .orElseThrow()
-        .getScheduledTimetable()
+        .getTimetableByPatternId()
+        .get(firstPattern.getId())
         .getTripTimes()
         .size()
     );

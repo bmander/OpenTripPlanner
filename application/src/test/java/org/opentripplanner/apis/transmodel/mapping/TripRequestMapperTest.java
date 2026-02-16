@@ -45,6 +45,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.transfer.regular.TransferRepository;
 import org.opentripplanner.transfer.regular.TransferServiceTestFactory;
 import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
@@ -96,16 +97,22 @@ public class TripRequestMapperTest implements PlanTestConstants {
     TIMETABLE_REPOSITORY.initTimeZone(ZoneIds.STOCKHOLM);
     var calendarServiceData = new CalendarServiceData();
     LocalDate serviceDate = itinerary.startTime().toLocalDate();
-    patterns.forEach(pattern -> {
+    var legs = itinerary
+      .legs()
+      .stream()
+      .filter(Leg::isScheduledTransitLeg)
+      .map(Leg::asScheduledTransitLeg)
+      .toList();
+    for (int i = 0; i < patterns.size(); i++) {
+      var pattern = patterns.get(i);
+      var tripTimes = legs.get(i).tripTimes();
+      var timetable = Timetable.of().addTripTimes(tripTimes).build();
       TIMETABLE_REPOSITORY.addTripPattern(pattern.getId(), pattern);
-      final int serviceCode = pattern
-        .getScheduledTimetable()
-        .getTripTimes()
-        .getFirst()
-        .getServiceCode();
+      TIMETABLE_REPOSITORY.addScheduledTimetable(pattern.getId(), timetable);
+      final int serviceCode = tripTimes.getServiceCode();
       TIMETABLE_REPOSITORY.getServiceCodes().put(pattern.getId(), serviceCode);
       calendarServiceData.putServiceDatesForServiceId(pattern.getId(), List.of(serviceDate));
-    });
+    }
 
     TIMETABLE_REPOSITORY.updateCalendarServiceData(calendarServiceData);
     TIMETABLE_REPOSITORY.index();

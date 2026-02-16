@@ -40,9 +40,38 @@ public class PatternTestModel {
       .withDepartureTimes("10:00 10:05")
       .build();
 
-    return TimetableRepositoryForTest.tripPattern("1", ROUTE_1)
+    var timetable = Timetable.of().addTripTimes(tt).build();
+    var tripHeadsign = timetable.getRepresentativeTripTimes() != null
+      ? timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+      : null;
+
+    var pattern = TimetableRepositoryForTest.tripPattern("1", ROUTE_1)
       .withStopPattern(STOP_PATTERN)
-      .withScheduledTimeTable(Timetable.of().addTripTimes(tt).build())
+      .withTripHeadsign(tripHeadsign)
       .build();
+    timetable.setPattern(pattern);
+    return pattern;
+  }
+
+  /**
+   * Returns the scheduled timetable for the pattern created by {@link #pattern()}.
+   */
+  public static Timetable timetable() {
+    return timetable(pattern());
+  }
+
+  /**
+   * Returns the scheduled timetable for the given pattern.
+   */
+  public static Timetable timetable(TripPattern pattern) {
+    var tt = ScheduledTripTimes.of()
+      .withTrip(TRIP)
+      .withArrivalTimes("10:00 10:05")
+      .withDepartureTimes("10:00 10:05")
+      .build();
+
+    var timetable = Timetable.of().addTripTimes(tt).build();
+    timetable.setPattern(pattern);
+    return timetable;
   }
 }

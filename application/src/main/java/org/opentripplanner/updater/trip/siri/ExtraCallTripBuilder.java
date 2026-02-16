@@ -150,14 +150,23 @@ class ExtraCallTripBuilder {
     tripTimes.validateNonIncreasingTimes();
     var timetable = Timetable.of().addTripTimes(tripTimes).build();
 
+    // Compute tripHeadsign from the timetable's representative trip times
+    var representativeTripTimes = timetable.getRepresentativeTripTimes();
+    var tripHeadsignValue = representativeTripTimes != null
+      ? representativeTripTimes.getTrip().getHeadsign()
+      : null;
+
     TripPattern pattern = TripPattern.of(generateTripPatternId.apply(trip))
       .withRoute(trip.getRoute())
       .withMode(trip.getMode())
       .withNetexSubmode(trip.getNetexSubMode())
       .withStopPattern(stopPattern)
       .withRealTimeStopPatternModified()
-      .withScheduledTimeTable(timetable)
+      .withTripHeadsign(tripHeadsignValue)
       .build();
+
+    // Set the back-reference from timetable to pattern
+    timetable.setPattern(pattern);
 
     RealTimeTripTimesBuilder builder = tripTimes.createRealTimeFromScheduledTimes();
 
@@ -183,7 +192,16 @@ class ExtraCallTripBuilder {
     /* Validate */
     try {
       return Result.success(
-        new TripUpdate(stopPattern, builder.build(), serviceDate, null, pattern, false, dataSource)
+        new TripUpdate(
+          stopPattern,
+          builder.build(),
+          serviceDate,
+          null,
+          pattern,
+          false,
+          dataSource,
+          timetable
+        )
       );
     } catch (DataValidationException e) {
       return DataValidationExceptionMapper.toResult(e, dataSource);

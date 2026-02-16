@@ -42,7 +42,6 @@ import org.opentripplanner.service.streetdetails.internal.DefaultStreetDetailsRe
 import org.opentripplanner.standalone.config.BuildConfig;
 import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.framework.DeduplicatorService;
-import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.service.TimetableRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,7 +202,7 @@ public class GtfsModule implements GraphBuilderModule {
             gtfsBundle.parameters().maxInterlineDistance(),
             issueStore,
             calendarServiceData,
-            TripPattern::getScheduledTimetable
+            timetableRepository::getScheduledTimetable
           ).run(dataImport.getTripPatterns());
         }
 

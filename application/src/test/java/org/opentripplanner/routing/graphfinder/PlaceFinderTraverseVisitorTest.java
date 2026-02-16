@@ -58,7 +58,6 @@ public class PlaceFinderTraverseVisitorTest {
   );
 
   static {
-    TripPatternBuilder t = tripPattern("trip", R);
     var st1 = new StopTime();
     st1.setStop(STOP1);
     st1.setArrivalTime(T11_00);
@@ -66,20 +65,23 @@ public class PlaceFinderTraverseVisitorTest {
     var st2 = new StopTime();
     st2.setStop(STOP2);
     st2.setArrivalTime(T11_05);
-    t.withStopPattern(new StopPattern(List.of(st1, st2)));
-    TIMETABLE_REPO.addTripPattern(id("tp1"), t.build());
+    TripPatternBuilder t1 = tripPattern("tp1", R);
+    t1.withStopPattern(new StopPattern(List.of(st1, st2)));
+    TIMETABLE_REPO.addTripPattern(id("tp1"), t1.build());
 
     var st3 = new StopTime();
     st3.setStop(STOP3);
     st3.setArrivalTime(T11_10);
-    t.withStopPattern(new StopPattern(List.of(st3)));
-    TIMETABLE_REPO.addTripPattern(id("tp2"), t.build());
+    TripPatternBuilder t2 = tripPattern("tp2", R);
+    t2.withStopPattern(new StopPattern(List.of(st3)));
+    TIMETABLE_REPO.addTripPattern(id("tp2"), t2.build());
 
     var st4 = new StopTime();
     st4.setStop(STOP4);
     st4.setArrivalTime(T11_10);
-    t.withStopPattern(new StopPattern(List.of(st4)));
-    TIMETABLE_REPO.addTripPattern(id("tp3"), t.build());
+    TripPatternBuilder t3 = tripPattern("tp3", R);
+    t3.withStopPattern(new StopPattern(List.of(st4)));
+    TIMETABLE_REPO.addTripPattern(id("tp3"), t3.build());
 
     TIMETABLE_REPO.index();
   }

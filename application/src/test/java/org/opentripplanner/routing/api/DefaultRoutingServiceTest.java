@@ -79,7 +79,9 @@ public class DefaultRoutingServiceTest extends GtfsTest {
   public void testPatternsCoherent() {
     for (Trip trip : transitService.listTrips()) {
       TripPattern pattern = transitService.findPattern(trip);
-      assertTrue(pattern.scheduledTripsAsStream().anyMatch(t -> t.equals(trip)));
+      assertTrue(
+        transitService.getScheduledTimetable(pattern).tripsAsStream().anyMatch(t -> t.equals(trip))
+      );
     }
     /* This one depends on a feed where each TripPattern appears on only one route. */
     for (Route route : transitService.listRoutes()) {

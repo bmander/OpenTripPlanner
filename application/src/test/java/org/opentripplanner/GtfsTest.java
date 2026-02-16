@@ -231,7 +231,8 @@ public abstract class GtfsTest {
     var snapshotManager = new TimetableSnapshotManager(
       new RealTimeRaptorTransitDataUpdater(timetableRepository),
       TimetableSnapshotParameters.PUBLISH_IMMEDIATELY,
-      LocalDate::now
+      LocalDate::now,
+      timetableRepository.getScheduledTimetableMap()
     );
     tripUpdateAdapter = new GtfsRealTimeTripUpdateAdapter(
       timetableRepository,

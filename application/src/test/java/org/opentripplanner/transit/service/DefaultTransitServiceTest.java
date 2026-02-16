@@ -100,9 +100,10 @@ class DefaultTransitServiceTest {
     .withServiceCode(SERVICE_CODE)
     .build();
 
-  private static final TripPattern RAIL_PATTERN = TEST_MODEL.pattern(RAIL)
-    .withScheduledTimeTable(Timetable.of().addTripTimes(SCHEDULED_TRIP_TIMES).build())
+  private static final Timetable RAIL_TIMETABLE = Timetable.of()
+    .addTripTimes(SCHEDULED_TRIP_TIMES)
     .build();
+  private static final TripPattern RAIL_PATTERN = TEST_MODEL.pattern(RAIL).build();
 
   private static final int DELAY = 120;
   private static final RealTimeTripTimes REALTIME_TRIP_TIMES = getRealTimeTripTimes();
@@ -124,9 +125,11 @@ class DefaultTransitServiceTest {
     .withDepartureTimes(new int[] { 0, 1 })
     .withServiceCode(SERVICE_CODE)
     .build();
+  private static final Timetable BUS_TIMETABLE_TODAY = Timetable.of()
+    .addTripTimes(SCHEDULED_TRIP_TIMES_TODAY)
+    .build();
   private static final TripPattern BUS_PATTERN_TODAY = TEST_MODEL.pattern(BUS)
     .withStopPattern(REAL_TIME_STOP_PATTERN)
-    .withScheduledTimeTable(Timetable.of().addTripTimes(SCHEDULED_TRIP_TIMES_TODAY).build())
     .build();
 
   private static final LocalDate SERVICE_DATE = LocalDate.of(2024, 1, 1);
@@ -161,6 +164,7 @@ class DefaultTransitServiceTest {
       .cancelTrip()
       .build();
     timetableRepository.addTripPattern(RAIL_PATTERN.getId(), RAIL_PATTERN);
+    timetableRepository.addScheduledTimetable(RAIL_PATTERN.getId(), RAIL_TIMETABLE);
 
     // Crate a calendar (needed for testing cancelled trips)
     CalendarServiceData calendarServiceData = new CalendarServiceData();
@@ -185,12 +189,14 @@ class DefaultTransitServiceTest {
     timetableRepository.addTripPattern(RAIL_PATTERN.getId(), RAIL_PATTERN);
     timetableRepository.addTripPattern(BUS_PATTERN.getId(), BUS_PATTERN);
     timetableRepository.addTripPattern(BUS_PATTERN_TODAY.getId(), BUS_PATTERN_TODAY);
+    timetableRepository.addScheduledTimetable(BUS_PATTERN_TODAY.getId(), BUS_TIMETABLE_TODAY);
 
     timetableRepository.updateCalendarServiceData(calendarServiceData);
 
     timetableRepository.index();
 
     TimetableSnapshot timetableSnapshot = new TimetableSnapshot();
+    timetableSnapshot.initScheduledTimetables(timetableRepository.getScheduledTimetableMap());
     TripTimes tripTimes = ScheduledTripTimes.of()
       .withTrip(TimetableRepositoryForTest.trip("123").build())
       .withDepartureTimes(new int[] { 0, 1 })

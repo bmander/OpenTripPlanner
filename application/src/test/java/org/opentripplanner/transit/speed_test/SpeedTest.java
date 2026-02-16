@@ -113,7 +113,7 @@ public class SpeedTest {
       new DefaultVehicleParkingRepository(),
       timetableRepository,
       new DefaultCarpoolingRepository(),
-      new TimetableSnapshotManager(null, TimetableSnapshotParameters.DEFAULT, LocalDate::now),
+      new TimetableSnapshotManager(null, TimetableSnapshotParameters.DEFAULT, LocalDate::now, Map.of()),
       routerConfig.updaterConfig()
     );
     if (timetableRepository.getUpdaterManager() != null) {

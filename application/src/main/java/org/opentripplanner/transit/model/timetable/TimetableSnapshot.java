@@ -148,6 +148,12 @@ public class TimetableSnapshot {
   > realTimeAddedTripOnServiceDateForTripAndDay;
 
   /**
+   * Scheduled timetables indexed by pattern ID. Used as fallback in {@link #resolve} when no
+   * real-time timetable is available for a given pattern and service date.
+   */
+  private final Map<FeedScopedId, Timetable> scheduledTimetables;
+
+  /**
    * Boolean value indicating that timetable snapshot is read only if true. Once it is true, it
    * shouldn't be possible to change it to false anymore.
    */
@@ -171,6 +177,7 @@ public class TimetableSnapshot {
       ArrayListMultimap.create(),
       new HashMap<>(),
       HashMultimap.create(),
+      new HashMap<>(),
       false
     );
   }
@@ -186,6 +193,7 @@ public class TimetableSnapshot {
     ListMultimap<FeedScopedId, TripOnServiceDate> realTimeAddedReplacedByTripOnServiceDateById,
     Map<TripIdAndServiceDate, TripOnServiceDate> realTimeAddedTripOnServiceDateForTripAndDay,
     SetMultimap<StopLocation, TripPattern> patternsForStop,
+    Map<FeedScopedId, Timetable> scheduledTimetables,
     boolean readOnly
   ) {
     this.timetables = timetables;
@@ -199,7 +207,16 @@ public class TimetableSnapshot {
       realTimeAddedReplacedByTripOnServiceDateById;
     this.realTimeAddedTripOnServiceDateForTripAndDay = realTimeAddedTripOnServiceDateForTripAndDay;
     this.patternsForStop = patternsForStop;
+    this.scheduledTimetables = scheduledTimetables;
     this.readOnly = readOnly;
+  }
+
+  /**
+   * Initialize the scheduled timetables from an external source. This must be called before
+   * any {@link #resolve} calls that need to fall back to scheduled timetables.
+   */
+  public void initScheduledTimetables(Map<FeedScopedId, Timetable> scheduledTimetables) {
+    this.scheduledTimetables.putAll(scheduledTimetables);
   }
 
   /**
@@ -217,7 +234,15 @@ public class TimetableSnapshot {
       }
     }
 
-    return pattern.getScheduledTimetable();
+    var scheduled = scheduledTimetables.get(pattern.getId());
+    if (scheduled != null) {
+      return scheduled;
+    }
+
+    // For real-time patterns that have no registered scheduled timetable,
+    // create an empty one. This happens when patterns are created
+    // by TripPatternCache for modified stop patterns.
+    return Timetable.of().withTripPattern(pattern).build();
   }
 
   /**
@@ -320,6 +345,14 @@ public class TimetableSnapshot {
     LocalDate serviceDate = realTimeTripUpdate.serviceDate();
     TripTimes updatedTripTimes = realTimeTripUpdate.updatedTripTimes();
 
+    // Register the scheduled timetable for newly created real-time patterns
+    if (
+      realTimeTripUpdate.scheduledTimetable() != null &&
+      !scheduledTimetables.containsKey(pattern.getId())
+    ) {
+      scheduledTimetables.put(pattern.getId(), realTimeTripUpdate.scheduledTimetable());
+    }
+
     Timetable tt = resolve(pattern, serviceDate);
     TimetableBuilder ttb = tt.copyOf().withServiceDate(serviceDate);
 
@@ -402,6 +435,7 @@ public class TimetableSnapshot {
       ImmutableListMultimap.copyOf(realTimeAddedReplacedByTripOnServiceDateById),
       Map.copyOf(realTimeAddedTripOnServiceDateForTripAndDay),
       ImmutableSetMultimap.copyOf(patternsForStop),
+      Map.copyOf(scheduledTimetables),
       true
     );
 
@@ -590,11 +624,17 @@ public class TimetableSnapshot {
       for (var timetable : timetablesOfPattern) {
         var serviceDate = timetable.getServiceDate();
         var patternAndServiceDate = new TripPatternAndServiceDate(patternId, serviceDate);
-        var scheduledTimetable = timetable
-          .getPattern()
-          .getScheduledTimetable()
-          .copyForServiceDate(serviceDate);
-        dirtyTimetables.put(patternAndServiceDate, scheduledTimetable);
+        var scheduled = scheduledTimetables.get(patternId);
+        if (scheduled != null) {
+          dirtyTimetables.put(patternAndServiceDate, scheduled.copyForServiceDate(serviceDate));
+        } else {
+          // For real-time added patterns with no scheduled timetable, create an empty one
+          var emptyTimetable = Timetable.of()
+            .withTripPattern(timetable.getPattern())
+            .withServiceDate(serviceDate)
+            .build();
+          dirtyTimetables.put(patternAndServiceDate, emptyTimetable);
+        }
       }
     }
     return timetables.entrySet().removeAll(entriesToBeRemoved);

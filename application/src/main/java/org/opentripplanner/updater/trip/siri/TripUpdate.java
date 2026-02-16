@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.timetable.RealTimeTripTimes;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 
@@ -23,6 +24,7 @@ import org.opentripplanner.transit.model.timetable.TripTimes;
  * @param routeCreation          true if an added trip cannot be registered under an existing route
  *                               and a new route must be created.
  * @param dataSource             the dataSource of the real-time update.
+ * @param scheduledTimetable     optionally, the scheduled timetable for a newly created pattern.
  */
 record TripUpdate(
   StopPattern stopPattern,
@@ -31,7 +33,8 @@ record TripUpdate(
   @Nullable TripOnServiceDate addedTripOnServiceDate,
   @Nullable TripPattern addedTripPattern,
   boolean routeCreation,
-  @Nullable String dataSource
+  @Nullable String dataSource,
+  @Nullable Timetable scheduledTimetable
 ) {
   public TripUpdate {
     Objects.requireNonNull(stopPattern);
@@ -48,7 +51,7 @@ record TripUpdate(
     LocalDate serviceDate,
     String dataSource
   ) {
-    this(stopPattern, updatedTripTimes, serviceDate, null, null, false, dataSource);
+    this(stopPattern, updatedTripTimes, serviceDate, null, null, false, dataSource, null);
   }
 
   /**

@@ -1,7 +1,6 @@
 package org.opentripplanner.model.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -111,10 +110,22 @@ public class TransitDataImportBuilderLimitPeriodTest {
     assertEquals(2, subject.getCalendarDates().size());
     assertEquals(4, subject.getTripsById().size());
     assertEquals(3, subject.getTripPatterns().get(STOP_PATTERN).size());
-    assertEquals(2, patternInT1.scheduledTripsAsStream().count());
-    assertEquals(2, patternInT1.getScheduledTimetable().getTripTimes().size());
-    assertEquals(1, patternInT2.scheduledTripsAsStream().count());
-    assertEquals(1, patternInT2.getScheduledTimetable().getTripTimes().size());
+    assertEquals(
+      2,
+      subject.getTimetableByPatternId().get(patternInT1.getId()).tripsAsStream().count()
+    );
+    assertEquals(
+      2,
+      subject.getTimetableByPatternId().get(patternInT1.getId()).getTripTimes().size()
+    );
+    assertEquals(
+      1,
+      subject.getTimetableByPatternId().get(patternInT2.getId()).tripsAsStream().count()
+    );
+    assertEquals(
+      1,
+      subject.getTimetableByPatternId().get(patternInT2.getId()).getTripTimes().size()
+    );
 
     // Limit service to last half of month
     subject.limitServiceDays(new LocalDateInterval(D2, D3));
@@ -141,7 +152,7 @@ public class TransitDataImportBuilderLimitPeriodTest {
     assertTrue(patterns.contains(patternInT1), patterns.toString());
     assertTrue(patterns.contains(patternInT2), patterns.toString());
 
-    // Verify patternInT1 is replaced by a copy that contains one less trip
+    // Verify patternInT1 still exists (same instance, since only the timetable changed)
     TripPattern copyOfTripPattern1 = subject
       .getTripPatterns()
       .values()
@@ -149,22 +160,21 @@ public class TransitDataImportBuilderLimitPeriodTest {
       .filter(p -> p.getId().equals(patternInT1.getId()))
       .findFirst()
       .orElseThrow();
-    assertNotSame(patternInT1, copyOfTripPattern1);
-    assertEquals(1, copyOfTripPattern1.scheduledTripsAsStream().count());
-    assertEquals(tripCSIn, copyOfTripPattern1.scheduledTripsAsStream().findFirst().orElseThrow());
+    // Pattern is the same object since timetable is stored separately
+    Timetable copyTimetable1 = subject.getTimetableByPatternId().get(copyOfTripPattern1.getId());
+    assertEquals(1, copyTimetable1.tripsAsStream().count());
+    assertEquals(tripCSIn, copyTimetable1.tripsAsStream().findFirst().orElseThrow());
 
     // Verify trips in patternInT2 is unchanged (one trip)
-    assertEquals(1, patternInT2.scheduledTripsAsStream().count());
+    Timetable timetableT2 = subject.getTimetableByPatternId().get(patternInT2.getId());
+    assertEquals(1, timetableT2.tripsAsStream().count());
 
     // Verify scheduledTimetable trips (one trip is removed from the copy of patternInT1)
-    assertEquals(1, copyOfTripPattern1.getScheduledTimetable().getTripTimes().size());
-    assertEquals(
-      tripCSIn,
-      copyOfTripPattern1.getScheduledTimetable().getTripTimes().get(0).getTrip()
-    );
+    assertEquals(1, copyTimetable1.getTripTimes().size());
+    assertEquals(tripCSIn, copyTimetable1.getTripTimes().get(0).getTrip());
 
     // Verify scheduledTimetable trips in pattern is unchanged (one trip)
-    assertEquals(1, patternInT2.getScheduledTimetable().getTripTimes().size());
+    assertEquals(1, timetableT2.getTripTimes().size());
   }
 
   private static ServiceCalendar createServiceCalendar(
@@ -204,11 +214,12 @@ public class TransitDataImportBuilderLimitPeriodTest {
     for (Trip trip : trips) {
       timetableBuilder.addTripTimes(TripTimesFactory.tripTimes(trip, STOP_TIMES, DEDUPLICATOR));
     }
-    return TripPattern.of(patternId)
+    var pattern = TripPattern.of(patternId)
       .withRoute(route)
       .withStopPattern(STOP_PATTERN)
-      .withScheduledTimeTable(timetableBuilder.build())
       .build();
+    subject.getTimetableByPatternId().put(patternId, timetableBuilder.build());
+    return pattern;
   }
 
   private Trip createTrip(String id, FeedScopedId serviceId) {

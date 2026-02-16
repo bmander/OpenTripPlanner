@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.glassfish.jersey.message.internal.OutboundJaxrsResponse;
@@ -227,22 +228,23 @@ class GraphQLIntegrationTest {
       .withServiceId(cal_id)
       .build();
     final TripPattern pattern = TEST_MODEL.pattern(BUS)
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(tripTimes)
-          .addTripTimes(tripTimes2)
-          .addTripTimes(
-            TripTimesFactory.tripTimes(
-              tripToBeReplaced,
-              TEST_MODEL.stopTimesEvery5Minutes(3, tripToBeReplaced, "11:30"),
-              DEDUPLICATOR
-            )
-          )
-          .build()
+      .withTripHeadsign(trip.getHeadsign())
+      .build();
+    var timetable = Timetable.of()
+      .withTripPattern(pattern)
+      .addTripTimes(tripTimes)
+      .addTripTimes(tripTimes2)
+      .addTripTimes(
+        TripTimesFactory.tripTimes(
+          tripToBeReplaced,
+          TEST_MODEL.stopTimesEvery5Minutes(3, tripToBeReplaced, "11:30"),
+          DEDUPLICATOR
+        )
       )
       .build();
 
-    timetableRepository.addTripPattern(id("pattern-1"), pattern);
+    timetableRepository.addTripPattern(pattern.getId(), pattern);
+    timetableRepository.addScheduledTimetable(pattern.getId(), timetable);
 
     var feedInfo = FeedInfoTestFactory.dummyForTest(FEED_ID);
     timetableRepository.addFeedInfo(feedInfo);
@@ -269,6 +271,9 @@ class GraphQLIntegrationTest {
     timetableRepository.index();
 
     TimetableSnapshot timetableSnapshot = new TimetableSnapshot();
+    timetableSnapshot.initScheduledTimetables(
+      Map.of(pattern.getId(), timetable)
+    );
     timetableSnapshot.update(
       new RealTimeTripUpdate(
         pattern,

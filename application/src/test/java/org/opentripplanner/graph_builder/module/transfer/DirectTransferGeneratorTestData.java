@@ -173,46 +173,62 @@ class DirectTransferGeneratorTestData extends GraphRoutingTest {
             )
             .build()
         );
-        tripPattern(
-          TripPattern.of(TimetableRepositoryForTest.id("TP2"))
-            .withRoute(route("R2", TransitMode.BUS, agency))
-            .withStopPattern(new StopPattern(List.of(st(S21), st(S22), st(S_FAR_AWAY))))
-            .withScheduledTimeTable(
-              Timetable.of()
-                .addTripTimes(
-                  ScheduledTripTimes.of()
-                    .withTrip(
-                      TimetableRepositoryForTest.trip("bikesAllowedTrip")
-                        .withBikesAllowed(BikeAccess.ALLOWED)
-                        .build()
-                    )
-                    .withDepartureTimes("00:00 01:00 02:00")
+        {
+          var tp2Timetable = Timetable.of()
+            .addTripTimes(
+              ScheduledTripTimes.of()
+                .withTrip(
+                  TimetableRepositoryForTest.trip("bikesAllowedTrip")
+                    .withBikesAllowed(BikeAccess.ALLOWED)
                     .build()
                 )
+                .withDepartureTimes("00:00 01:00 02:00")
                 .build()
             )
-            .build()
-        );
+            .build();
+          var tp2TripHeadsign = tp2Timetable.getRepresentativeTripTimes() != null
+            ? tp2Timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+            : null;
+          var tp2 = TripPattern.of(TimetableRepositoryForTest.id("TP2"))
+            .withRoute(route("R2", TransitMode.BUS, agency))
+            .withStopPattern(new StopPattern(List.of(st(S21), st(S22), st(S_FAR_AWAY))))
+            .withTripHeadsign(tp2TripHeadsign)
+            .build();
+          tripPattern(tp2);
+          timetableRepository().addScheduledTimetable(tp2.getId(), tp2Timetable);
+        }
 
         if (includeCarFerryTrips) {
-          tripPattern(
-            TripPattern.of(TimetableRepositoryForTest.id("TP4"))
+          {
+            var tp4Timetable = Timetable.of()
+              .addTripTimes(createCarsAllowedTripTimesWithTwoStops())
+              .build();
+            var tp4TripHeadsign = tp4Timetable.getRepresentativeTripTimes() != null
+              ? tp4Timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+              : null;
+            var tp4 = TripPattern.of(TimetableRepositoryForTest.id("TP4"))
               .withRoute(route("R4", TransitMode.FERRY, agency))
               .withStopPattern(new StopPattern(List.of(st(S_FAR_AWAY), st(S0), st(S12))))
-              .withScheduledTimeTable(
-                Timetable.of().addTripTimes(createCarsAllowedTripTimesWithTwoStops()).build()
-              )
-              .build()
-          );
-          tripPattern(
-            TripPattern.of(TimetableRepositoryForTest.id("TP5"))
+              .withTripHeadsign(tp4TripHeadsign)
+              .build();
+            tripPattern(tp4);
+            timetableRepository().addScheduledTimetable(tp4.getId(), tp4Timetable);
+          }
+          {
+            var tp5Timetable = Timetable.of()
+              .addTripTimes(createCarsAllowedTripTimesWithTwoStops())
+              .build();
+            var tp5TripHeadsign = tp5Timetable.getRepresentativeTripTimes() != null
+              ? tp5Timetable.getRepresentativeTripTimes().getTrip().getHeadsign()
+              : null;
+            var tp5 = TripPattern.of(TimetableRepositoryForTest.id("TP5"))
               .withRoute(route("R5", TransitMode.FERRY, agency))
               .withStopPattern(new StopPattern(List.of(st(S22), st(S23))))
-              .withScheduledTimeTable(
-                Timetable.of().addTripTimes(createCarsAllowedTripTimesWithTwoStops()).build()
-              )
-              .build()
-          );
+              .withTripHeadsign(tp5TripHeadsign)
+              .build();
+            tripPattern(tp5);
+            timetableRepository().addScheduledTimetable(tp5.getId(), tp5Timetable);
+          }
         }
       }
     }

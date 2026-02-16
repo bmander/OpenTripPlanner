@@ -7,7 +7,6 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 import org.opentripplanner.graph_builder.model.GraphBuilderModule;
-import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.service.TimetableRepository;
 
 /**
@@ -51,12 +50,9 @@ public class TimeZoneAdjusterModule implements GraphBuilderModule {
           .copyOf()
           .withAdjustedTimes(timeShift)
           .build();
-        TripPattern updatedPattern = pattern
-          .copy()
-          .withScheduledTimeTable(adjustedTimetable)
-          .build();
-        // replace the original pattern with the updated pattern in the transit model
-        timetableRepository.addTripPattern(updatedPattern.getId(), updatedPattern);
+        adjustedTimetable.setPattern(pattern);
+        // Replace the timetable for this pattern in the repository
+        timetableRepository.addScheduledTimetable(pattern.getId(), adjustedTimetable);
       });
     timetableRepository.index();
   }

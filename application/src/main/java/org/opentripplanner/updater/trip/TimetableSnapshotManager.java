@@ -1,6 +1,7 @@
 package org.opentripplanner.updater.trip;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -56,11 +57,13 @@ public final class TimetableSnapshotManager {
   public TimetableSnapshotManager(
     @Nullable RealTimeRaptorTransitDataUpdater realtimeRaptorTransitDataUpdater,
     TimetableSnapshotParameters parameters,
-    Supplier<LocalDate> localDateNow
+    Supplier<LocalDate> localDateNow,
+    Map<FeedScopedId, Timetable> scheduledTimetables
   ) {
     this.realtimeRaptorTransitDataUpdater = realtimeRaptorTransitDataUpdater;
     this.purgeExpiredData = parameters.purgeExpiredData();
     this.localDateNow = Objects.requireNonNull(localDateNow);
+    buffer.initScheduledTimetables(scheduledTimetables);
     // Force commit so that snapshot initializes
     commitTimetableSnapshot(true);
   }

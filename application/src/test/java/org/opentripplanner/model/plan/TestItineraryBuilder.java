@@ -548,11 +548,17 @@ public class TestItineraryBuilder implements PlanTestConstants {
 
     StopPattern stopPattern = new StopPattern(stopTimes);
     final TripTimes tripTimes = TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator());
+    var timetable = Timetable.of().addTripTimes(tripTimes).build();
+    var representativeTripTimes = timetable.getRepresentativeTripTimes();
+    var tripHeadsign = representativeTripTimes != null
+      ? representativeTripTimes.getTrip().getHeadsign()
+      : null;
     TripPattern tripPattern = TripPattern.of(route.getId())
       .withRoute(route)
       .withStopPattern(stopPattern)
-      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
+      .withTripHeadsign(tripHeadsign)
       .build();
+    timetable.setPattern(tripPattern);
 
     ScheduledTransitLeg leg;
 

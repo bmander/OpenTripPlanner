@@ -53,8 +53,12 @@ class RealtimeResolverTest {
     // Put a delay on trip 1
     var serviceDate = itinerary.startTime().toLocalDate();
     var patterns = itineraryPatterns(itinerary);
-    var delayedPattern = delay(patterns.get(0), 123);
-    var transitService = makeTransitService(List.of(delayedPattern, patterns.get(1)), serviceDate);
+    var delayedTimetable = delay(itinerary.legs().get(0).asScheduledTransitLeg().tripTimes(), 123);
+    var transitService = makeTransitService(
+      patterns,
+      List.of(delayedTimetable, Timetable.of().addTripTimes(itinerary.legs().get(1).asScheduledTransitLeg().tripTimes()).build()),
+      serviceDate
+    );
 
     // Put an alert on stop3
     var alert = TransitAlert.of(stop3.getId())
@@ -71,14 +75,8 @@ class RealtimeResolverTest {
     assertFalse(itinerariesWithRealtime.isEmpty());
 
     var legs = itinerariesWithRealtime.getFirst().legs();
-    var leg1ArrivalDelay = legs
-      .get(0)
-      .asScheduledTransitLeg()
-      .tripPattern()
-      .getScheduledTimetable()
-      .getTripTimes()
-      .getFirst()
-      .getArrivalDelay(1);
+    var leg1TripTimes = legs.get(0).asScheduledTransitLeg().tripTimes();
+    var leg1ArrivalDelay = leg1TripTimes.getArrivalDelay(1);
     assertEquals(123, leg1ArrivalDelay);
     assertEquals(0, legs.get(0).listTransitAlerts().size());
     assertEquals(1, legs.get(1).listTransitAlerts().size());
@@ -117,7 +115,13 @@ class RealtimeResolverTest {
 
     var serviceDate = staySeatedItinerary.startTime().toLocalDate();
     var patterns = itineraryPatterns(staySeatedItinerary);
-    var transitService = makeTransitService(patterns, serviceDate);
+    var timetables = staySeatedItinerary
+      .legs()
+      .stream()
+      .filter(Leg::isScheduledTransitLeg)
+      .map(l -> Timetable.of().addTripTimes(l.asScheduledTransitLeg().tripTimes()).build())
+      .toList();
+    var transitService = makeTransitService(patterns, timetables, serviceDate);
 
     var itineraries = List.of(staySeatedItinerary);
     itineraries = RealtimeResolver.populateLegsWithRealtime(itineraries, transitService);
@@ -129,19 +133,12 @@ class RealtimeResolverTest {
     assertTrue(constrained.getTransferConstraint().isStaySeated());
   }
 
-  private static TripPattern delay(TripPattern pattern1, int seconds) {
-    var originalTimeTable = pattern1.getScheduledTimetable();
-
-    var delayedTripTimes = delay(originalTimeTable.getTripTimes().getFirst(), seconds);
-    var delayedTimetable = Timetable.of()
-      .withTripPattern(pattern1)
-      .addTripTimes(delayedTripTimes)
-      .build();
-
-    return pattern1.copy().withScheduledTimeTable(delayedTimetable).build();
+  private static Timetable delay(TripTimes tt, int seconds) {
+    var delayedTripTimes = delayTripTimes(tt, seconds);
+    return Timetable.of().addTripTimes(delayedTripTimes).build();
   }
 
-  private static TripTimes delay(TripTimes tt, int seconds) {
+  private static TripTimes delayTripTimes(TripTimes tt, int seconds) {
     var builder = tt.createRealTimeFromScheduledTimes();
     IntStream.range(0, tt.getNumStops()).forEach(i -> {
       builder.withArrivalDelay(i, seconds);
@@ -162,19 +159,23 @@ class RealtimeResolverTest {
 
   private static TransitService makeTransitService(
     List<TripPattern> patterns,
+    List<Timetable> timetables,
     LocalDate serviceDate
   ) {
     var timetableRepository = new TimetableRepository();
     CalendarServiceData calendarServiceData = new CalendarServiceData();
 
-    patterns.forEach(pattern -> {
+    for (int i = 0; i < patterns.size(); i++) {
+      var pattern = patterns.get(i);
+      var timetable = timetables.get(i);
       timetableRepository.addTripPattern(pattern.getId(), pattern);
+      timetableRepository.addScheduledTimetable(pattern.getId(), timetable);
 
-      var serviceCode = pattern.getScheduledTimetable().getTripTimes().getFirst().getServiceCode();
+      var serviceCode = timetable.getTripTimes().getFirst().getServiceCode();
       timetableRepository.getServiceCodes().put(pattern.getId(), serviceCode);
 
       calendarServiceData.putServiceDatesForServiceId(pattern.getId(), List.of(serviceDate));
-    });
+    }
 
     timetableRepository.updateCalendarServiceData(calendarServiceData);
     timetableRepository.index();

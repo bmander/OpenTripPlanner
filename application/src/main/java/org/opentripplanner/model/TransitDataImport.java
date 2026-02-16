@@ -15,6 +15,7 @@ import org.opentripplanner.transit.model.site.BoardingArea;
 import org.opentripplanner.transit.model.site.Pathway;
 import org.opentripplanner.transit.model.site.PathwayNode;
 import org.opentripplanner.transit.model.site.RegularStop;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 import org.opentripplanner.transit.service.SiteRepository;
@@ -58,6 +59,8 @@ public interface TransitDataImport {
   Collection<ConstrainedTransfer> getAllTransfers();
 
   Collection<TripPattern> getTripPatterns();
+
+  Map<FeedScopedId, Timetable> getTimetableByPatternId();
 
   Collection<Trip> getAllTrips();
 

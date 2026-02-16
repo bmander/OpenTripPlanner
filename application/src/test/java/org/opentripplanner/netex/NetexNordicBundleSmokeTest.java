@@ -73,7 +73,7 @@ public class NetexNordicBundleSmokeTest {
     assertOperators(otpModel.getAllOperators());
     assertStops(otpModel.siteRepository().listRegularStops());
     assertStations(otpModel.siteRepository().listStations());
-    assertTripPatterns(otpModel.getTripPatterns());
+    assertTripPatterns(otpModel);
     assertTrips(otpModel.getAllTrips());
     assertTripsOnServiceDate(otpModel.getTripOnServiceDates());
     assertServiceIds(otpModel.getAllTrips(), otpModel.getAllServiceIds());
@@ -154,7 +154,8 @@ public class NetexNordicBundleSmokeTest {
     assertEquals(5, stations.size());
   }
 
-  private void assertTripPatterns(Collection<TripPattern> patterns) {
+  private void assertTripPatterns(TransitDataImport otpModel) {
+    Collection<TripPattern> patterns = otpModel.getTripPatterns();
     Map<FeedScopedId, TripPattern> map = patterns
       .stream()
       .collect(Collectors.toMap(TripPattern::getId, s -> s));
@@ -165,9 +166,10 @@ public class NetexNordicBundleSmokeTest {
       "[RegularStop{EN:NSR:Quay:7203 N/A}, RegularStop{EN:NSR:Quay:8027 N/A}]",
       p.getStops().toString()
     );
+    var timetable = otpModel.getTimetableByPatternId().get(p.getId());
     assertEquals(
       "[Trip{EN:RUT:ServiceJourney:12-101375-1000 12}]",
-      p.scheduledTripsAsStream().toList().toString()
+      timetable.tripsAsStream().toList().toString()
     );
 
     assertEquals(4, patterns.size());

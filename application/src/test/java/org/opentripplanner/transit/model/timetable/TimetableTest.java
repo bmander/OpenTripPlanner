@@ -1,22 +1,12 @@
 package org.opentripplanner.transit.model.timetable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.opentripplanner.transit.model._data.FeedScopedIdForTestFactory.id;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
-import org.opentripplanner.transit.model.network.Route;
-import org.opentripplanner.transit.model.network.TripPattern;
-import org.opentripplanner.transit.model.site.RegularStop;
 
 class TimetableTest {
-
-  private static final TimetableRepositoryForTest TEST_MODEL = TimetableRepositoryForTest.of();
-
-  private static final Route ROUTE = TimetableRepositoryForTest.route("routeId").build();
-  public static final RegularStop STOP_A = TEST_MODEL.stop("A").build();
-  public static final RegularStop STOP_C = TEST_MODEL.stop("C").build();
 
   @ParameterizedTest
   @CsvSource(
@@ -32,21 +22,14 @@ class TimetableTest {
     useHeadersInDisplayName = true
   )
   void maxTripSpanDays(String testCaseName, String schedule, int expectedNumberOfDays) {
-    var timetable = TripPattern.of(id(testCaseName))
-      .withRoute(ROUTE)
-      .withStopPattern(TimetableRepositoryForTest.stopPattern(STOP_A, STOP_C))
-      .withScheduledTimeTable(
-        Timetable.of()
-          .addTripTimes(
-            ScheduledTripTimes.of()
-              .withTrip(TimetableRepositoryForTest.trip("t1").build())
-              .withDepartureTimes(schedule)
-              .build()
-          )
+    var timetable = Timetable.of()
+      .addTripTimes(
+        ScheduledTripTimes.of()
+          .withTrip(TimetableRepositoryForTest.trip("t1").build())
+          .withDepartureTimes(schedule)
           .build()
       )
-      .build()
-      .getScheduledTimetable();
+      .build();
 
     assertEquals(expectedNumberOfDays, timetable.getMaxTripSpanDays());
   }

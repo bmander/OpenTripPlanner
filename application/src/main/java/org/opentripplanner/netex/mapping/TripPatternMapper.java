@@ -245,6 +245,12 @@ class TripPatternMapper {
 
     var timetable = Timetable.of().addAllTripTimes(createTripTimes(trips, tripStopTimes)).build();
 
+    // Compute tripHeadsign from the timetable's representative trip times
+    var representativeTripTimes = timetable.getRepresentativeTripTimes();
+    var tripHeadsign = representativeTripTimes != null
+      ? representativeTripTimes.getTrip().getHeadsign()
+      : null;
+
     var tripPattern = TripPattern.of(idFactory.createId(journeyPattern.getId()))
       .withRoute(lookupRoute(journeyPattern))
       .withStopPattern(stopPattern)
@@ -255,12 +261,16 @@ class TripPatternMapper {
       .withHopGeometries(
         serviceLinkMapper.getGeometriesByJourneyPattern(journeyPattern, stopPattern)
       )
-      .withScheduledTimeTable(timetable)
+      .withTripHeadsign(tripHeadsign)
       .build();
+
+    // Set the back-reference from timetable to pattern
+    timetable.setPattern(tripPattern);
 
     return Optional.of(
       new TripPatternMapperResult(
         tripPattern,
+        timetable,
         scheduledStopPointsIndex,
         tripStopTimes,
         stopTimeByNetexId,

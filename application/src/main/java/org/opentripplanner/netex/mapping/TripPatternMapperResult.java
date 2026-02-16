@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.transit.model.network.TripPattern;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
 
@@ -17,6 +18,7 @@ import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
  */
 record TripPatternMapperResult(
   TripPattern tripPattern,
+  Timetable timetable,
   ArrayListMultimap<String, String> scheduledStopPointsIndex,
   Map<Trip, List<StopTime>> tripStopTimes,
   Map<String, StopTime> stopTimeByNetexId,

@@ -106,6 +106,8 @@ public class TransitDataImportBuilder {
 
   private final Multimap<StopPattern, TripPattern> tripPatterns = ArrayListMultimap.create();
 
+  private final Map<FeedScopedId, Timetable> timetableByPatternId = new HashMap<>();
+
   private final EntityById<FlexTrip<?, ?>> flexTripsById = new DefaultEntityById<>();
 
   private final EntityById<Branding> brandingsById = new DefaultEntityById<>();
@@ -228,6 +230,10 @@ public class TransitDataImportBuilder {
 
   public Multimap<StopPattern, TripPattern> getTripPatterns() {
     return tripPatterns;
+  }
+
+  public Map<FeedScopedId, Timetable> getTimetableByPatternId() {
+    return timetableByPatternId;
   }
 
   public EntityById<FlexTrip<?, ?>> getFlexTripsById() {
@@ -383,27 +389,30 @@ public class TransitDataImportBuilder {
 
     for (Map.Entry<StopPattern, TripPattern> e : tripPatterns.entries()) {
       TripPattern ptn = e.getValue();
-      Set<TripTimes> tripTimesToBeRemoved = ptn
-        .getScheduledTimetable()
+      Timetable timetable = timetableByPatternId.get(ptn.getId());
+      if (timetable == null) {
+        continue;
+      }
+      Set<TripTimes> tripTimesToBeRemoved = timetable
         .getTripTimes()
         .stream()
         .filter(tripTimes -> !tripsById.containsKey(tripTimes.getTrip().getId()))
         .collect(Collectors.toUnmodifiableSet());
       if (!tripTimesToBeRemoved.isEmpty()) {
         removePatterns.add(e);
-        Timetable updatedTimetable = ptn
-          .getScheduledTimetable()
+        Timetable updatedTimetable = timetable
           .copyOf()
           .removeAllTripTimes(tripTimesToBeRemoved)
           .build();
-        TripPattern updatedPattern = ptn.copy().withScheduledTimeTable(updatedTimetable).build();
         if (!updatedTimetable.getTripTimes().isEmpty()) {
-          updatedPatterns.add(updatedPattern);
+          updatedPatterns.add(ptn);
+          timetableByPatternId.put(ptn.getId(), updatedTimetable);
         } else {
+          timetableByPatternId.remove(ptn.getId());
           issueStore.add(
             "RemovedEmptyTripPattern",
             "Removed trip pattern %s as it contains no trips",
-            updatedPattern.getId()
+            ptn.getId()
           );
         }
       }

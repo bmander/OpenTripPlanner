@@ -385,7 +385,8 @@ public class SiriRealTimeTripUpdateAdapter {
       tripUpdate.addedTripOnServiceDate(),
       tripUpdate.tripCreation(),
       tripUpdate.routeCreation(),
-      tripUpdate.dataSource()
+      tripUpdate.dataSource(),
+      tripUpdate.scheduledTimetable()
     );
     var result = snapshotManager.updateBuffer(realTimeTripUpdate);
     LOG.debug("Applied real-time data for trip {} on {}", trip, serviceDate);

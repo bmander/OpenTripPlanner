@@ -34,15 +34,15 @@ class EmpiricalDelayGraphBuilderTest {
     var stopPattern = new StopPattern(stopTimes);
 
     var tripTimes = TripTimesFactory.tripTimes(trip, stopTimes, new Deduplicator());
+    var timetable = Timetable.of().addTripTimes(tripTimes).build();
     var pattern = TripPattern.of(trip.getId())
       .withRoute(trip.getRoute())
       .withStopPattern(stopPattern)
-      .withScheduledTimeTable(Timetable.of().addTripTimes(tripTimes).build())
       .build();
 
     var map = EmpiricalDelayGraphBuilder.createStopIdsByTripIdMap(
       List.of(pattern),
-      TripPattern::scheduledTripsAsStream
+      p -> timetable.tripsAsStream()
     );
 
     var stops = map.get(trip.getId());

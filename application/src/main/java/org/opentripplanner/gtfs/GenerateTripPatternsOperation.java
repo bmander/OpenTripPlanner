@@ -95,11 +95,23 @@ public class GenerateTripPatternsOperation {
     tripPatternBuilders
       .values()
       .forEach(tpb -> {
-        // Build the timetable and set it on the pattern builder before building the pattern
+        // Build the timetable separately from the pattern
         Timetable timetable = timetableBuilders.get(tpb).build();
-        tpb.withScheduledTimeTable(timetable);
+
+        // Compute tripHeadsign from the timetable's representative trip times
+        var representativeTripTimes = timetable.getRepresentativeTripTimes();
+        if (representativeTripTimes != null) {
+          tpb.withTripHeadsign(representativeTripTimes.getTrip().getHeadsign());
+        }
+
         TripPattern tripPattern = tpb.build();
+
+        // Set the back-reference from timetable to pattern
+        timetable.setPattern(tripPattern);
+
+        // Register the pattern and its timetable
         transitServiceBuilder.getTripPatterns().put(tripPattern.getStopPattern(), tripPattern);
+        transitServiceBuilder.getTimetableByPatternId().put(tripPattern.getId(), timetable);
       });
 
     LOG.info(progressLogger.completeMessage());

@@ -67,7 +67,14 @@ public class TripOnDateDataFetcher {
    *  Get scheduled TripTimes for the trip
    */
   public TripTimes scheduledTripTimes() {
-    var timetable = scheduledTripPattern().getScheduledTimetable();
+    var pattern = scheduledTripPattern();
+    if (pattern == null) {
+      return null;
+    }
+    var timetable = transitService.getScheduledTimetable(pattern);
+    if (timetable == null) {
+      return null;
+    }
     return timetable.getTripTimes(trip());
   }
 

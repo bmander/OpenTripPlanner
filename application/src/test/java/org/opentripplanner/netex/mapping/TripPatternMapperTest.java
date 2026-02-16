@@ -67,9 +67,9 @@ class TripPatternMapperTest {
     TripPatternMapperResult r = res.get();
 
     assertEquals(4, r.tripPattern().numberOfStops());
-    assertEquals(1, r.tripPattern().scheduledTripsAsStream().count());
+    assertEquals(1, r.timetable().tripsAsStream().count());
 
-    Trip trip = r.tripPattern().scheduledTripsAsStream().findFirst().get();
+    Trip trip = r.timetable().tripsAsStream().findFirst().get();
 
     assertEquals("RUT:ServiceJourney:1", trip.getId().getId());
     assertEquals("NSR:Quay:1", r.tripPattern().getStop(0).getId().getId());
@@ -77,9 +77,9 @@ class TripPatternMapperTest {
     assertEquals("NSR:Quay:3", r.tripPattern().getStop(2).getId().getId());
     assertEquals("NSR:Quay:4", r.tripPattern().getStop(3).getId().getId());
 
-    assertEquals(1, r.tripPattern().getScheduledTimetable().getTripTimes().size());
+    assertEquals(1, r.timetable().getTripTimes().size());
 
-    TripTimes tripTimes = r.tripPattern().getScheduledTimetable().getTripTimes().get(0);
+    TripTimes tripTimes = r.timetable().getTripTimes().get(0);
 
     assertEquals(4, tripTimes.getNumStops());
 
@@ -100,7 +100,7 @@ class TripPatternMapperTest {
 
     assertEquals(2, r.tripOnServiceDates().size());
 
-    Trip trip = r.tripPattern().scheduledTripsAsStream().findFirst().get();
+    Trip trip = r.timetable().tripsAsStream().findFirst().get();
 
     for (TripOnServiceDate tripOnServiceDate : r.tripOnServiceDates()) {
       assertEquals(trip, tripOnServiceDate.getTrip());

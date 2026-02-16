@@ -37,7 +37,7 @@ class GtfsModuleTest {
     var frequencyTripPattern = model.timetableRepository
       .getAllTripPatterns()
       .stream()
-      .filter(p -> !p.getScheduledTimetable().getFrequencyEntries().isEmpty())
+      .filter(p -> !model.timetableRepository.getScheduledTimetable(p).getFrequencyEntries().isEmpty())
       .toList();
 
     assertEquals(1, frequencyTripPattern.size());

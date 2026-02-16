@@ -258,10 +258,11 @@ public class RouteImpl implements GraphQLDataFetchers.GraphQLRoute {
   }
 
   private Iterable<Trip> getTrips(DataFetchingEnvironment environment) {
-    return getTransitService(environment)
+    var transitService = getTransitService(environment);
+    return transitService
       .findPatterns(getSource(environment))
       .stream()
-      .flatMap(TripPattern::scheduledTripsAsStream)
+      .flatMap(pattern -> transitService.getScheduledTimetable(pattern).tripsAsStream())
       .collect(Collectors.toSet());
   }
 

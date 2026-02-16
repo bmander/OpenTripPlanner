@@ -421,13 +421,23 @@ public class TimetableRepository implements Serializable {
   public void addTripPattern(FeedScopedId id, TripPattern tripPattern) {
     invalidateIndex();
     tripPatternForId.put(id, tripPattern);
-    // Auto-populate the scheduled timetable map using the pattern's own ID,
-    // which is what getScheduledTimetable(TripPattern) uses for lookup
-    scheduledTimetableByPatternId.put(tripPattern.getId(), tripPattern.getScheduledTimetable());
+    // Ensure a scheduled timetable exists for this pattern. If one is not provided later
+    // via addScheduledTimetable, this empty timetable serves as a default.
+    if (!scheduledTimetableByPatternId.containsKey(id)) {
+      var emptyTimetable = Timetable.of().withTripPattern(tripPattern).build();
+      scheduledTimetableByPatternId.put(id, emptyTimetable);
+    }
   }
 
   public void addScheduledTimetable(FeedScopedId patternId, Timetable timetable) {
     scheduledTimetableByPatternId.put(patternId, timetable);
+    // Automatically set the back-reference from timetable to pattern if available
+    if (timetable.getPattern() == null) {
+      TripPattern pattern = tripPatternForId.get(patternId);
+      if (pattern != null) {
+        timetable.setPattern(pattern);
+      }
+    }
   }
 
   public Timetable getScheduledTimetable(FeedScopedId patternId) {
@@ -435,12 +445,11 @@ public class TimetableRepository implements Serializable {
   }
 
   public Timetable getScheduledTimetable(TripPattern pattern) {
-    var timetable = scheduledTimetableByPatternId.get(pattern.getId());
-    if (timetable != null) {
-      return timetable;
-    }
-    // Fallback for patterns not registered in the repository (e.g., realtime-created patterns)
-    return pattern.getScheduledTimetable();
+    return scheduledTimetableByPatternId.get(pattern.getId());
+  }
+
+  public Map<FeedScopedId, Timetable> getScheduledTimetableMap() {
+    return Collections.unmodifiableMap(scheduledTimetableByPatternId);
   }
 
   public void addScheduledStopPointMapping(Map<FeedScopedId, RegularStop> mapping) {

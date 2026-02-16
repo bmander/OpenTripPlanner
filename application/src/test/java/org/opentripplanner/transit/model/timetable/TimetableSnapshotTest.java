@@ -34,18 +34,20 @@ public class TimetableSnapshotTest {
   public static final LocalDate SERVICE_DATE = LocalDate.of(2024, 1, 1);
   private static Map<FeedScopedId, TripPattern> patternIndex;
   private static String feedId;
+  private static TimetableRepository timetableRepository;
 
   @BeforeAll
   public static void setUp() throws Exception {
     TestOtpModel model = ConstantsForTests.buildGtfsGraph(ConstantsForTests.SIMPLE_GTFS);
-    TimetableRepository timetableRepository = model.timetableRepository();
+    timetableRepository = model.timetableRepository();
 
     feedId = timetableRepository.getFeedIds().iterator().next();
 
     patternIndex = new HashMap<>();
     for (TripPattern tripPattern : timetableRepository.getAllTripPatterns()) {
-      tripPattern
-        .scheduledTripsAsStream()
+      timetableRepository
+        .getScheduledTimetable(tripPattern)
+        .tripsAsStream()
         .forEach(trip -> patternIndex.put(trip.getId(), tripPattern));
     }
   }
@@ -62,7 +64,11 @@ public class TimetableSnapshotTest {
   void testUniqueDirtyTimetablesAfterMultipleUpdates() {
     TimetableSnapshot snapshot = new TimetableSnapshot();
     TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
-    Trip trip = pattern.scheduledTripsAsStream().findFirst().orElseThrow();
+    Trip trip = timetableRepository
+      .getScheduledTimetable(pattern)
+      .tripsAsStream()
+      .findFirst()
+      .orElseThrow();
 
     RealTimeTripUpdate realTimeTripUpdate = createRealTimeTripUpdate(pattern, trip);
 
@@ -93,7 +99,10 @@ public class TimetableSnapshotTest {
     TimetableSnapshot committedSnapshot = createCommittedSnapshot();
     LocalDate today = LocalDate.now(TIME_ZONE);
     TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
-    TripTimes tripTimes = pattern.getScheduledTimetable().getTripTimes().getFirst();
+    TripTimes tripTimes = timetableRepository
+      .getScheduledTimetable(pattern)
+      .getTripTimes()
+      .getFirst();
     RealTimeTripUpdate realTimeTripUpdate = new RealTimeTripUpdate(pattern, tripTimes, today);
     assertThrows(ConcurrentModificationException.class, () ->
       committedSnapshot.update(realTimeTripUpdate)
@@ -132,7 +141,11 @@ public class TimetableSnapshotTest {
   void testClear() {
     TimetableSnapshot snapshot = new TimetableSnapshot();
     TripPattern pattern = patternIndex.get(new FeedScopedId(feedId, "1.1"));
-    Trip trip = pattern.scheduledTripsAsStream().findFirst().orElseThrow();
+    Trip trip = timetableRepository
+      .getScheduledTimetable(pattern)
+      .tripsAsStream()
+      .findFirst()
+      .orElseThrow();
 
     TripIdAndServiceDate tripIdAndServiceDate = new TripIdAndServiceDate(
       trip.getId(),

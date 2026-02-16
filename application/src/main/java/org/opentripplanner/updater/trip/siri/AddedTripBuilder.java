@@ -239,14 +239,23 @@ class AddedTripBuilder {
 
     var timetable = Timetable.of().addTripTimes(tripTimes).build();
 
+    // Compute tripHeadsign from the timetable's representative trip times
+    var representativeTripTimes = timetable.getRepresentativeTripTimes();
+    var tripHeadsignValue = representativeTripTimes != null
+      ? representativeTripTimes.getTrip().getHeadsign()
+      : null;
+
     TripPattern pattern = TripPattern.of(getTripPatternId.apply(trip))
       .withRoute(trip.getRoute())
       .withMode(trip.getMode())
       .withNetexSubmode(trip.getNetexSubMode())
       .withStopPattern(stopPattern)
       .withRealTimeAddedTrip()
-      .withScheduledTimeTable(timetable)
+      .withTripHeadsign(tripHeadsignValue)
       .build();
+
+    // Set the back-reference from timetable to pattern
+    timetable.setPattern(pattern);
 
     RealTimeTripTimesBuilder builder = tripTimes.createRealTimeFromScheduledTimes();
 
@@ -285,7 +294,8 @@ class AddedTripBuilder {
           tripOnServiceDate,
           pattern,
           isAddedRoute,
-          dataSource
+          dataSource,
+          timetable
         )
       );
     } catch (DataValidationException e) {

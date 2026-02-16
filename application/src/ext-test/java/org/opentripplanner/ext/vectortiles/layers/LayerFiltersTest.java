@@ -10,19 +10,21 @@ import org.opentripplanner.transit.model._data.PatternTestModel;
 import org.opentripplanner.transit.model._data.TimetableRepositoryForTest;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
+import org.opentripplanner.transit.model.timetable.Timetable;
 
 class LayerFiltersTest {
 
   private static final RegularStop STOP = TimetableRepositoryForTest.of().stop("1").build();
   private static final LocalDate DATE = LocalDate.of(2024, 9, 5);
   private static final TripPattern PATTERN = PatternTestModel.pattern();
+  private static final Timetable TIMETABLE = PatternTestModel.timetable();
 
   @Test
   void includeStopWithinServiceWeek() {
     var predicate = LayerFilters.buildCurrentServiceWeekPredicate(
       s -> List.of(PATTERN),
       trip -> List.of(DATE),
-      p -> p.scheduledTripsAsStream(),
+      p -> TIMETABLE.tripsAsStream(),
       () -> DATE
     );
 
@@ -35,7 +37,7 @@ class LayerFiltersTest {
     var predicate = LayerFilters.buildCurrentServiceWeekPredicate(
       s -> List.of(PATTERN),
       trip -> List.of(inThreeWeeks),
-      p -> p.scheduledTripsAsStream(),
+      p -> TIMETABLE.tripsAsStream(),
       () -> DATE
     );
 

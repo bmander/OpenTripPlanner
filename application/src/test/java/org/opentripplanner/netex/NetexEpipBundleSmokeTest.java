@@ -64,7 +64,7 @@ class NetexEpipBundleSmokeTest {
     assertOperators(otpModel.getAllOperators());
     assertStops(otpModel.siteRepository().listRegularStops());
     assertStations(otpModel.siteRepository().listStations());
-    assertTripPatterns(otpModel.getTripPatterns());
+    assertTripPatterns(otpModel);
     assertTrips(otpModel.getAllTrips());
     assertServiceIds(otpModel.getAllTrips(), otpModel.getAllServiceIds());
 
@@ -132,7 +132,8 @@ class NetexEpipBundleSmokeTest {
     assertEquals(20, stations.size());
   }
 
-  private void assertTripPatterns(Collection<TripPattern> patterns) {
+  private void assertTripPatterns(TransitDataImport otpModel) {
+    Collection<TripPattern> patterns = otpModel.getTripPatterns();
     Map<FeedScopedId, TripPattern> map = patterns
       .stream()
       .collect(Collectors.toMap(TripPattern::getId, s -> s));
@@ -144,7 +145,8 @@ class NetexEpipBundleSmokeTest {
       "[RegularStop{HH:DE::Quay:800018_MastM:: Teufelsbrück (Fähre)}, RegularStop{HH:DE::Quay:800091_MastM:: Bf. Altona}]",
       p.getStops().toString()
     );
-    List<Trip> trips = p.scheduledTripsAsStream().toList();
+    var timetable = otpModel.getTimetableByPatternId().get(p.getId());
+    List<Trip> trips = timetable.tripsAsStream().toList();
     assertEquals("Trip{HH:DE::ServiceJourney:36439062_0:: X86}", trips.getFirst().toString());
     assertEquals(55, trips.size());
     assertEquals(4, patterns.size());

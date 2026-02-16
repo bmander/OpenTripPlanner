@@ -185,7 +185,7 @@ class AddedTripBuilderTest {
     assertEquals(STOP_C, stopPattern.getStop(2));
 
     // Assert scheduled timetable
-    var scheduledTimes = pattern.getScheduledTimetable().getTripTimes(trip);
+    var scheduledTimes = tripUpdate.scheduledTimetable().getTripTimes(trip);
     assertNotNull(scheduledTimes);
     // TODO - is this correct?
     assertEquals(RealTimeState.SCHEDULED, scheduledTimes.getRealTimeState());

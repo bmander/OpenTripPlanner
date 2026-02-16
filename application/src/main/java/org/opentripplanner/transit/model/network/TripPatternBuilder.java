@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
+import org.opentripplanner.core.model.i18n.I18NString;
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.framework.geometry.CompactLineStringUtils;
 import org.opentripplanner.framework.geometry.GeometryUtils;
@@ -13,7 +14,6 @@ import org.opentripplanner.transit.model.basic.Direction;
 import org.opentripplanner.transit.model.basic.SubMode;
 import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.transit.model.framework.AbstractEntityBuilder;
-import org.opentripplanner.transit.model.timetable.Timetable;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class TripPatternBuilder
@@ -28,7 +28,9 @@ public final class TripPatternBuilder
   private SubMode netexSubMode;
   private StopPattern stopPattern;
   private Direction direction;
-  private Timetable scheduledTimetable;
+
+  @Nullable
+  private I18NString tripHeadsign;
 
   @Nullable
   private TripPattern originalTripPattern;
@@ -48,7 +50,7 @@ public final class TripPatternBuilder
     this.containsMultipleModes = original.getContainsMultipleModes();
     this.stopPattern = original.getStopPattern();
     this.direction = original.getDirection();
-    this.scheduledTimetable = original.getScheduledTimetable();
+    this.tripHeadsign = original.getTripHeadsign();
     this.stopPatternModifiedInRealTime = original.isStopPatternModifiedInRealTime();
     this.realTimeTripPattern = original.isRealTimeTripPattern();
     this.originalTripPattern = original.getOriginalTripPattern();
@@ -94,8 +96,8 @@ public final class TripPatternBuilder
     return this;
   }
 
-  public TripPatternBuilder withScheduledTimeTable(Timetable scheduledTimetable) {
-    this.scheduledTimetable = scheduledTimetable;
+  public TripPatternBuilder withTripHeadsign(@Nullable I18NString tripHeadsign) {
+    this.tripHeadsign = tripHeadsign;
     return this;
   }
 
@@ -149,9 +151,6 @@ public final class TripPatternBuilder
     if (direction != null) {
       return direction;
     }
-    if (scheduledTimetable != null) {
-      return scheduledTimetable.getDirection();
-    }
     return Direction.UNKNOWN;
   }
 
@@ -180,8 +179,9 @@ public final class TripPatternBuilder
     return stopPattern;
   }
 
-  Timetable getScheduledTimetable() {
-    return scheduledTimetable;
+  @Nullable
+  I18NString getTripHeadsign() {
+    return tripHeadsign;
   }
 
   String getName() {
