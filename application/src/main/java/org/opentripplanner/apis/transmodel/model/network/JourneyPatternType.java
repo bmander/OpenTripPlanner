@@ -74,7 +74,10 @@ public class JourneyPatternType {
           .withDirective(TransmodelDirectives.TIMING_DATA)
           .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(serviceJourneyType))))
           .dataFetcher(e ->
-            ((TripPattern) e.getSource()).scheduledTripsAsStream().collect(Collectors.toList())
+            GqlUtil.getTransitService(e)
+              .getScheduledTimetable((TripPattern) e.getSource())
+              .tripsAsStream()
+              .collect(Collectors.toList())
           )
           .build()
       )
@@ -94,7 +97,8 @@ public class JourneyPatternType {
               )
             );
 
-            return ((TripPattern) environment.getSource()).getScheduledTimetable()
+            return GqlUtil.getTransitService(environment)
+              .getScheduledTimetable((TripPattern) environment.getSource())
               .getTripTimes()
               .stream()
               .filter(times -> services.contains(times.getServiceCode()))

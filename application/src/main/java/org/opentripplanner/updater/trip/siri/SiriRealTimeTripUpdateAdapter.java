@@ -404,7 +404,7 @@ public class SiriRealTimeTripUpdateAdapter {
 
     if (pattern != null) {
       // Mark scheduled trip times for this trip in this pattern as deleted
-      final Timetable timetable = pattern.getScheduledTimetable();
+      final Timetable timetable = transitEditorService.getScheduledTimetable(pattern);
       final TripTimes tripTimes = timetable.getTripTimes(trip);
 
       if (tripTimes == null) {

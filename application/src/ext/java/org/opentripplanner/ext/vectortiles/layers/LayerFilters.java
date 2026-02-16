@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.opentripplanner.apis.gtfs.model.LocalDateRange;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
@@ -33,6 +34,7 @@ public class LayerFilters {
   public static Predicate<RegularStop> buildCurrentServiceWeekPredicate(
     Function<RegularStop, Collection<TripPattern>> getPatternsForStop,
     Function<Trip, Collection<LocalDate>> getServiceDatesForTrip,
+    Function<TripPattern, Stream<Trip>> getScheduledTrips,
     Supplier<LocalDate> nowSupplier
   ) {
     var serviceDate = nowSupplier.get();
@@ -44,7 +46,8 @@ public class LayerFilters {
       new LocalDateRange(lastSunday, nextSundayPlusOne),
       // not used
       route -> List.of(),
-      getServiceDatesForTrip
+      getServiceDatesForTrip,
+      getScheduledTrips
     );
 
     return regularStop -> {
@@ -61,6 +64,7 @@ public class LayerFilters {
         transitService::findPatterns,
         trip ->
           transitService.getCalendarService().getServiceDatesForServiceId(trip.getServiceId()),
+        p -> transitService.getScheduledTimetable(p).tripsAsStream(),
         () -> LocalDate.now(transitService.getTimeZone())
       );
     };

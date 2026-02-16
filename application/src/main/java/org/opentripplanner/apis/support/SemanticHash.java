@@ -7,6 +7,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Timetable;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.model.timetable.TripTimes;
 
@@ -33,13 +34,17 @@ public class SemanticHash {
    * <p>
    * TODO deal with frequency-based trips
    */
-  public static String forTripPattern(TripPattern tripPattern, Trip trip) {
+  public static String forTripPattern(
+    TripPattern tripPattern,
+    Timetable scheduledTimetable,
+    Trip trip
+  ) {
     HashFunction murmur = Hashing.murmur3_32();
     BaseEncoding encoder = BaseEncoding.base64Url().omitPadding();
     StringBuilder sb = new StringBuilder(50);
     sb.append(encoder.encode(forStopPattern(tripPattern, murmur).asBytes()));
     if (trip != null) {
-      TripTimes tripTimes = tripPattern.getScheduledTimetable().getTripTimes(trip);
+      TripTimes tripTimes = scheduledTimetable.getTripTimes(trip);
       if (tripTimes == null) {
         return null;
       }

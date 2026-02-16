@@ -72,8 +72,9 @@ class TimetableRepositoryIndex {
 
     for (TripPattern pattern : timetableRepository.getAllTripPatterns()) {
       patternsForRoute.put(pattern.getRoute(), pattern);
-      pattern
-        .scheduledTripsAsStream()
+      timetableRepository
+        .getScheduledTimetable(pattern)
+        .tripsAsStream()
         .forEach(trip -> {
           patternForTrip.put(trip, pattern);
           tripForId.put(trip.getId(), trip);
@@ -244,17 +245,19 @@ class TimetableRepositoryIndex {
       serviceCodesRunningForDate.put(serviceDate, serviceCodesRunning);
     }
 
-    initializeTheEndOfServiceDateForStop(endOfServiceDateForService);
+    initializeTheEndOfServiceDateForStop(endOfServiceDateForService, timetableRepository);
   }
 
   private void initializeTheEndOfServiceDateForStop(
-    Map<FeedScopedId, LocalDate> endOfServiceDateForService
+    Map<FeedScopedId, LocalDate> endOfServiceDateForService,
+    TimetableRepository timetableRepository
   ) {
     Map<StopLocation, LocalDate> endOfServiceDates = new HashMap<>();
     for (StopLocation stop : patternsForStop.keySet()) {
       for (TripPattern pattern : patternsForStop.get(stop)) {
-        pattern
-          .scheduledTripsAsStream()
+        timetableRepository
+          .getScheduledTimetable(pattern)
+          .tripsAsStream()
           .forEach(trip -> {
             LocalDate tripEndDate = endOfServiceDateForService.get(trip.getServiceId());
             LocalDate endOfServiceDate = endOfServiceDates.get(stop);

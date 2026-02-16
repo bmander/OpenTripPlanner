@@ -41,7 +41,8 @@ class PatternByServiceDatesFilterTest {
       new PatternByServiceDatesFilter(
         new LocalDateRange(start, end),
         r -> List.of(),
-        d -> List.of()
+        d -> List.of(),
+        p -> p.scheduledTripsAsStream()
       )
     );
   }
@@ -62,7 +63,8 @@ class PatternByServiceDatesFilterTest {
       new PatternByServiceDatesFilter(
         new LocalDateRange(start, end),
         r -> List.of(),
-        d -> List.of()
+        d -> List.of(),
+        p -> p.scheduledTripsAsStream()
       )
     );
   }
@@ -118,7 +120,8 @@ class PatternByServiceDatesFilterTest {
     return new PatternByServiceDatesFilter(
       new LocalDateRange(start, end),
       route -> List.of(PATTERN_1),
-      trip -> List.of(parse("2024-05-01"), parse("2024-06-01"))
+      trip -> List.of(parse("2024-05-01"), parse("2024-06-01")),
+      p -> p.scheduledTripsAsStream()
     );
   }
 }

@@ -122,7 +122,8 @@ public class TransfersReport {
     TripPattern pattern,
     StopLocation stop,
     Trip trip,
-    boolean boarding
+    boolean boarding,
+    TransitService transitService
   ) {
     if (pattern == null) {
       r.loc += stop.getName() + " [Pattern no found]";
@@ -138,7 +139,7 @@ public class TransfersReport {
     r.loc += stop.getName() + " [" + stopPosition + "]";
 
     if (trip != null) {
-      var tt = pattern.getScheduledTimetable().getTripTimes(trip);
+      var tt = transitService.getScheduledTimetable(pattern).getTripTimes(trip);
       r.time = boarding
         ? tt.getScheduledDepartureTime(stopPosition)
         : tt.getScheduledArrivalTime(stopPosition);
@@ -158,7 +159,7 @@ public class TransfersReport {
       r.route = route.getName() + " " + route.getMode() + " " + route.getLongName();
       r.trip = trip.getHeadsign() != null ? trip.getHeadsign().toString() : null;
       var stop = ptn.getStop(tp.getStopPositionInPattern());
-      addLocation(r, ptn, stop, trip, boarding);
+      addLocation(r, ptn, stop, trip, boarding, transitService);
     } else if (p instanceof RouteStopTransferPoint rp) {
       var route = rp.getRoute();
       var ptn = transitService.findPatterns(route).stream().findFirst().orElse(null);
@@ -166,7 +167,7 @@ public class TransfersReport {
       r.type = "Route";
       r.entityId = route.getId().getId();
       r.route = route.getName() + " " + route.getMode() + " " + route.getLongName();
-      addLocation(r, ptn, rp.getStop(), null, boarding);
+      addLocation(r, ptn, rp.getStop(), null, boarding, transitService);
     } else if (p instanceof RouteStationTransferPoint rp) {
       var route = rp.getRoute();
       r.operator = getName(route.getOperator());

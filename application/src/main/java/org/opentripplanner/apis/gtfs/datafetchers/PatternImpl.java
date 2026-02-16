@@ -186,7 +186,14 @@ public class PatternImpl implements GraphQLDataFetchers.GraphQLPattern {
 
   @Override
   public DataFetcher<String> semanticHash() {
-    return environment -> SemanticHash.forTripPattern(getSource(environment), null);
+    return environment -> {
+      TripPattern pattern = getSource(environment);
+      return SemanticHash.forTripPattern(
+        pattern,
+        getTransitService(environment).getScheduledTimetable(pattern),
+        null
+      );
+    };
   }
 
   @Override
@@ -210,8 +217,8 @@ public class PatternImpl implements GraphQLDataFetchers.GraphQLPattern {
         TIntSet services = getTransitService(environment).getServiceCodesRunningForDate(
           ServiceDateUtils.parseString(serviceDate)
         );
-        return getSource(environment)
-          .getScheduledTimetable()
+        return getTransitService(environment)
+          .getScheduledTimetable(getSource(environment))
           .getTripTimes()
           .stream()
           .filter(times -> services.contains(times.getServiceCode()))
@@ -243,7 +250,10 @@ public class PatternImpl implements GraphQLDataFetchers.GraphQLPattern {
   }
 
   private List<Trip> getTrips(DataFetchingEnvironment environment) {
-    return getSource(environment).scheduledTripsAsStream().collect(Collectors.toList());
+    return getTransitService(environment)
+      .getScheduledTimetable(getSource(environment))
+      .tripsAsStream()
+      .collect(Collectors.toList());
   }
 
   private RealtimeVehicleService getRealtimeVehiclesService(DataFetchingEnvironment environment) {

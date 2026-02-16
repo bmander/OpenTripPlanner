@@ -109,7 +109,8 @@ class InterlineProcessorTest implements PlanTestConstants {
       List.of(),
       100,
       DataImportIssueStore.NOOP,
-      calendarServiceData
+      calendarServiceData,
+      TripPattern::getScheduledTimetable
     );
 
     var createdTransfers = processor.run(patterns);
@@ -140,7 +141,8 @@ class InterlineProcessorTest implements PlanTestConstants {
       List.of(notAllowed),
       100,
       DataImportIssueStore.NOOP,
-      calendarService
+      calendarService,
+      TripPattern::getScheduledTimetable
     );
 
     var createdTransfers = processor.run(patterns);

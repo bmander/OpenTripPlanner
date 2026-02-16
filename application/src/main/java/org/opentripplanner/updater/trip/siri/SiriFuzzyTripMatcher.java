@@ -162,7 +162,9 @@ public class SiriFuzzyTripMatcher {
       }
       String lastStopId = tripPattern.lastStop().getId().getId();
 
-      TripTimes tripTimes = tripPattern.getScheduledTimetable().getTripTimes(trip);
+      TripTimes tripTimes = transitService
+        .getScheduledTimetable(tripPattern)
+        .getTripTimes(trip);
       if (tripTimes != null) {
         int arrivalTime = tripTimes.getArrivalTime(tripTimes.getNumStops() - 1);
 

@@ -252,7 +252,7 @@ public class GtfsRealTimeTripUpdateAdapter {
 
     // Get new TripTimes based on scheduled timetable
     var result = tripTimesUpdater.createUpdatedTripTimesFromGtfsRt(
-      pattern.getScheduledTimetable(),
+      transitEditorService.getScheduledTimetable(pattern),
       tripUpdate,
       forwardsDelayPropagationType,
       backwardsDelayPropagationType
@@ -465,7 +465,7 @@ public class GtfsRealTimeTripUpdateAdapter {
 
     if (pattern != null) {
       // Cancel scheduled trip times for this trip in this pattern
-      final Timetable timetable = pattern.getScheduledTimetable();
+      final Timetable timetable = transitEditorService.getScheduledTimetable(pattern);
       var tripTimes = timetable.getTripTimes(tripId);
       if (tripTimes != null) {
         cancelTrip(serviceDate, cancelationType, pattern, tripTimes);

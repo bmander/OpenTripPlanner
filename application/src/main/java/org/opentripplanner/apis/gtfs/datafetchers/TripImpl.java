@@ -291,7 +291,11 @@ public class TripImpl implements GraphQLDataFetchers.GraphQLTrip {
       if (tripPattern == null) {
         return null;
       }
-      return SemanticHash.forTripPattern(tripPattern, getSource(environment));
+      return SemanticHash.forTripPattern(
+        tripPattern,
+        getTransitService(environment).getScheduledTimetable(tripPattern),
+        getSource(environment)
+      );
     };
   }
 
@@ -341,6 +345,7 @@ public class TripImpl implements GraphQLDataFetchers.GraphQLTrip {
         Timetable timetable = transitService.findTimetable(tripPattern, serviceDate);
         return TripTimeOnDate.fromTripTimesWithScheduleFallback(
           timetable,
+          transitService.getScheduledTimetable(tripPattern),
           trip,
           serviceDate,
           midnight

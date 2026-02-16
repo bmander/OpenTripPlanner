@@ -88,6 +88,7 @@ public class TripOnServiceDateImpl implements GraphQLDataFetchers.GraphQLTripOnS
       }
       return TripTimeOnDate.fromTripTimesWithScheduleFallback(
         arguments.timetable(),
+        arguments.scheduledTimetable(),
         arguments.trip(),
         arguments.serviceDate(),
         arguments.midnight()
@@ -138,13 +139,18 @@ public class TripOnServiceDateImpl implements GraphQLDataFetchers.GraphQLTripOnS
       transitService.getTimeZone()
     ).toInstant();
     Timetable timetable = getTimetable(environment, trip, serviceDate);
-    return new FromTripTimesArguments(trip, serviceDate, midnight, timetable);
+    TripPattern tripPattern = transitService.findPattern(trip, serviceDate);
+    Timetable scheduledTimetable = tripPattern != null
+      ? transitService.getScheduledTimetable(tripPattern)
+      : null;
+    return new FromTripTimesArguments(trip, serviceDate, midnight, timetable, scheduledTimetable);
   }
 
   private record FromTripTimesArguments(
     Trip trip,
     LocalDate serviceDate,
     Instant midnight,
-    @Nullable Timetable timetable
+    @Nullable Timetable timetable,
+    @Nullable Timetable scheduledTimetable
   ) {}
 }

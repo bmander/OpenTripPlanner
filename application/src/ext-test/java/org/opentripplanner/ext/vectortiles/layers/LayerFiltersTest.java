@@ -22,6 +22,7 @@ class LayerFiltersTest {
     var predicate = LayerFilters.buildCurrentServiceWeekPredicate(
       s -> List.of(PATTERN),
       trip -> List.of(DATE),
+      p -> p.scheduledTripsAsStream(),
       () -> DATE
     );
 
@@ -34,6 +35,7 @@ class LayerFiltersTest {
     var predicate = LayerFilters.buildCurrentServiceWeekPredicate(
       s -> List.of(PATTERN),
       trip -> List.of(inThreeWeeks),
+      p -> p.scheduledTripsAsStream(),
       () -> DATE
     );
 

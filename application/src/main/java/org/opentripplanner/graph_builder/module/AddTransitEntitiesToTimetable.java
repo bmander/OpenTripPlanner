@@ -79,11 +79,13 @@ public class AddTransitEntitiesToTimetable {
 
     /* Loop over all new TripPatterns setting the service codes. */
     for (TripPattern tripPattern : tripPatterns) {
-      // TODO this could be more elegant
-      tripPattern.getScheduledTimetable().setServiceCodes(timetableRepository.getServiceCodes());
-
       // Store the tripPattern in the timetable repository so it will be serialized and usable in routing.
       timetableRepository.addTripPattern(tripPattern.getId(), tripPattern);
+
+      // TODO this could be more elegant
+      timetableRepository.getScheduledTimetable(tripPattern).setServiceCodes(
+        timetableRepository.getServiceCodes()
+      );
     }
   }
 

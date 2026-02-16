@@ -79,7 +79,10 @@ public class EmissionGraphBuilder implements GraphBuilderModule {
   private Map<FeedScopedId, List<StopLocation>> createStopsByTripIdMap() {
     var map = new HashMap<FeedScopedId, List<StopLocation>>();
     for (TripPattern pattern : timetableRepository.getAllTripPatterns()) {
-      pattern.scheduledTripsAsStream().forEach(it -> map.put(it.getId(), pattern.getStops()));
+      timetableRepository
+        .getScheduledTimetable(pattern)
+        .tripsAsStream()
+        .forEach(it -> map.put(it.getId(), pattern.getStops()));
     }
     return map;
   }

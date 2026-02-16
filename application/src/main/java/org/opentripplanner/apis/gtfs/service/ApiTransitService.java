@@ -90,8 +90,9 @@ public class ApiTransitService {
     TripPattern originalPattern,
     LocalDate date
   ) {
-    return originalPattern
-      .scheduledTripsAsStream()
+    return transitService
+      .getScheduledTimetable(originalPattern)
+      .tripsAsStream()
       .map(trip -> transitService.findNewTripPatternForModifiedTrip(trip.getId(), date))
       .filter(
         tripPattern ->

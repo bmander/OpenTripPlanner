@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.framework.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.graph_builder.issue.api.DataImportIssueStore;
@@ -40,6 +41,7 @@ public class InterlineProcessor {
   private final LocalDate transitServiceStart;
   private final int daysInTransitService;
   private final CalendarServiceData calendarServiceData;
+  private final Function<TripPattern, Timetable> getScheduledTimetable;
   private final Map<FeedScopedId, BitSet> daysOfServices = new HashMap<>();
 
   public InterlineProcessor(
@@ -47,10 +49,12 @@ public class InterlineProcessor {
     List<StaySeatedNotAllowed> staySeatedNotAllowed,
     int maxInterlineDistance,
     DataImportIssueStore issueStore,
-    CalendarServiceData calendarServiceData
+    CalendarServiceData calendarServiceData,
+    Function<TripPattern, Timetable> getScheduledTimetable
   ) {
     this.transferService = transferService;
     this.staySeatedNotAllowed = staySeatedNotAllowed;
+    this.getScheduledTimetable = getScheduledTimetable;
     this.maxInterlineDistance = maxInterlineDistance > 0 ? maxInterlineDistance : 200;
     this.issueStore = issueStore;
     this.transitServiceStart = calendarServiceData.getFirstDate().orElse(null);
@@ -129,7 +133,7 @@ public class InterlineProcessor {
 
     LOG.info("Finding interlining trips based on block IDs.");
     for (TripPattern pattern : tripPatterns) {
-      Timetable timetable = pattern.getScheduledTimetable();
+      Timetable timetable = getScheduledTimetable.apply(pattern);
       /* TODO: Block semantics seem undefined for frequency trips, so skip them? */
       for (TripTimes tripTimes : timetable.getTripTimes()) {
         Trip trip = tripTimes.getTrip();

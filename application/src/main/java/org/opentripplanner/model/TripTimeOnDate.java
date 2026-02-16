@@ -92,17 +92,18 @@ public class TripTimeOnDate {
    * If the timetable does not contain the trip, scheduledTimetable is used instead.
    *
    * @param table the timetable for the service day
+   * @param scheduledTimetable the scheduled (non-realtime) timetable for fallback
    * @param serviceDate service day to set
    */
   public static List<TripTimeOnDate> fromTripTimesWithScheduleFallback(
     Timetable table,
+    Timetable scheduledTimetable,
     Trip trip,
     LocalDate serviceDate,
     Instant midnight
   ) {
     TripTimes times = table.getTripTimes(trip);
     if (times == null) {
-      Timetable scheduledTimetable = table.getPattern().getScheduledTimetable();
       return fromTripTimes(scheduledTimetable, trip);
     }
     List<TripTimeOnDate> out = new ArrayList<>();

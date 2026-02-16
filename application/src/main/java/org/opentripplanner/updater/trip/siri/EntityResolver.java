@@ -259,7 +259,7 @@ public class EntityResolver {
     if (pattern == null) {
       return 0;
     }
-    var tripTimes = pattern.getScheduledTimetable().getTripTimes(trip);
+    var tripTimes = transitService.getScheduledTimetable(pattern).getTripTimes(trip);
     if (tripTimes == null) {
       return 0;
     }

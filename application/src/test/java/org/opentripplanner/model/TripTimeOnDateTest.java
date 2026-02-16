@@ -179,6 +179,7 @@ class TripTimeOnDateTest {
     Instant midnight = ServiceDateUtils.asStartOfService(serviceDate, ZoneIds.HELSINKI).toInstant();
     var tripTimeOnDates = TripTimeOnDate.fromTripTimesWithScheduleFallback(
       timetable,
+      timetable,
       trip,
       serviceDate,
       midnight

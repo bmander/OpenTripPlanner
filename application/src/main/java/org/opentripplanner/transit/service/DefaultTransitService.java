@@ -118,7 +118,7 @@ public class DefaultTransitService implements TransitEditorService {
   public Optional<List<TripTimeOnDate>> getScheduledTripTimes(Trip trip) {
     TripPattern tripPattern = findPattern(trip);
     return Optional.ofNullable(
-      TripTimeOnDate.fromTripTimes(tripPattern.getScheduledTimetable(), trip)
+      TripTimeOnDate.fromTripTimes(timetableRepository.getScheduledTimetable(tripPattern), trip)
     );
   }
 
@@ -531,7 +531,7 @@ public class DefaultTransitService implements TransitEditorService {
     OTPRequestTimeoutException.checkForTimeout();
     return timetableSnapshot != null
       ? timetableSnapshot.resolve(tripPattern, serviceDate)
-      : tripPattern.getScheduledTimetable();
+      : timetableRepository.getScheduledTimetable(tripPattern);
   }
 
   @Override

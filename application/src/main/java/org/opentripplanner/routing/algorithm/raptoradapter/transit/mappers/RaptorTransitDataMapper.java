@@ -86,7 +86,8 @@ public class RaptorTransitDataMapper {
     if (OTPFeature.TransferConstraints.isOn()) {
       transferIndexGenerator = new TransferIndexGenerator(
         transitService.getConstrainedTransferService().listAll(),
-        allTripPatterns
+        allTripPatterns,
+        p -> transitService.getScheduledTimetable(p).tripsAsStream().toList()
       );
       constrainedTransfers = transferIndexGenerator.generateTransfers();
     }
@@ -136,7 +137,7 @@ public class RaptorTransitDataMapper {
         // Maybe determine in advance which patterns are running on each service and day.
         for (TripPattern oldTripPattern : allTripPatterns) {
           TripPatternForDate tripPatternForDate = tripPatternForDateMapper.map(
-            oldTripPattern.getScheduledTimetable(),
+            transitService.getScheduledTimetable(oldTripPattern),
             serviceDate
           );
           if (tripPatternForDate != null) {

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import org.opentripplanner.transfer.constrained.model.ConstrainedTransfer;
@@ -44,10 +45,11 @@ public class TransferIndexGenerator {
 
   public TransferIndexGenerator(
     Collection<ConstrainedTransfer> constrainedTransfers,
-    Collection<TripPattern> tripPatterns
+    Collection<TripPattern> tripPatterns,
+    Function<TripPattern, List<Trip>> getScheduledTrips
   ) {
     this.constrainedTransfers = constrainedTransfers;
-    setupPatterns(tripPatterns);
+    setupPatterns(tripPatterns, getScheduledTrips);
   }
 
   public ConstrainedTransfersForPatterns generateTransfers() {
@@ -100,9 +102,12 @@ public class TransferIndexGenerator {
   /**
    * Index scheduled patterns when loading the graph initially.
    */
-  private void setupPatterns(Collection<TripPattern> tripPatterns) {
+  private void setupPatterns(
+    Collection<TripPattern> tripPatterns,
+    Function<TripPattern, List<Trip>> getScheduledTrips
+  ) {
     for (TripPattern tripPattern : tripPatterns) {
-      setupPattern(tripPattern, tripPattern.scheduledTripsAsStream().toList());
+      setupPattern(tripPattern, getScheduledTrips.apply(tripPattern));
     }
   }
 

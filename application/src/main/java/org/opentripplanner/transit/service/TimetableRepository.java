@@ -605,7 +605,9 @@ public class TimetableRepository implements Serializable {
   ) {
     Set<StopLocation> stopLocations = getAllTripPatterns()
       .stream()
-      .filter(t -> t.getScheduledTimetable().getTripTimes().stream().anyMatch(tripTimesPredicate))
+      .filter(t ->
+        getScheduledTimetable(t).getTripTimes().stream().anyMatch(tripTimesPredicate)
+      )
       .flatMap(t -> t.getStops().stream())
       .collect(Collectors.toSet());
 

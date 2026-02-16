@@ -37,6 +37,7 @@ class VehiclePositionUpdaterRunnable implements GraphWriterRunnable {
       feedId,
       context.transitService()::getTrip,
       context.transitService()::findPattern,
+      context.transitService()::getScheduledTimetable,
       context.transitService()::findPattern,
       realtimeVehicleRepository,
       context.transitService().getTimeZone(),

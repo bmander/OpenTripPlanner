@@ -96,8 +96,9 @@ public class StopImpl implements GraphQLDataFetchers.GraphQLStop {
                 );
               }
               if (types.contains(GraphQLTypes.GraphQLStopAlertType.TRIPS)) {
-                pattern
-                  .scheduledTripsAsStream()
+                getTransitService(environment)
+                  .getScheduledTimetable(pattern)
+                  .tripsAsStream()
                   .forEach(trip -> alerts.addAll(alertService.getTripAlerts(trip.getId())));
               }
             });

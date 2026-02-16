@@ -241,7 +241,7 @@ public class StopTimesHelper {
       .create();
 
     int timeRangeSeconds = (int) timeRange.toSeconds();
-    int maxTripSpanDays = pattern.getScheduledTimetable().getMaxTripSpanDays();
+    int maxTripSpanDays = transitService.getScheduledTimetable(pattern).getMaxTripSpanDays();
 
     // The `maxTripSpanDays + 1` is used to "overselect" the running-dates to account for up to
     // 24h delays. This had a performance overhead of ~25% (Bergen, Norway), so we check if there are delays

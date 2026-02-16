@@ -29,7 +29,7 @@ public class TripPatternNamer implements GraphBuilderModule {
   @Override
   public void buildGraph() {
     /* Generate unique human-readable names for all the TableTripPatterns. */
-    generateUniqueNames(timetableRepository.getAllTripPatterns());
+    generateUniqueNames(timetableRepository.getAllTripPatterns(), timetableRepository);
   }
 
   /**
@@ -66,7 +66,10 @@ public class TripPatternNamer implements GraphBuilderModule {
    * combination will create unique names). from, to, via, express. Then concatenate all necessary
    * fields. Express should really be determined from number of stops and/or run time of trips.
    */
-  public static void generateUniqueNames(Collection<TripPattern> tableTripPatterns) {
+  public static void generateUniqueNames(
+    Collection<TripPattern> tableTripPatterns,
+    TimetableRepository timetableRepository
+  ) {
     LOG.info("Generating unique names for stop patterns on each route.");
 
     /* Group TripPatterns by Route */
@@ -175,7 +178,9 @@ public class TripPatternNamer implements GraphBuilderModule {
           sb.append(" express");
         } else {
           // The final fallback: reference a specific trip ID.
-          Optional.ofNullable(pattern.getScheduledTimetable().getRepresentativeTripTimes())
+          Optional.ofNullable(
+            timetableRepository.getScheduledTimetable(pattern).getRepresentativeTripTimes()
+          )
             .map(TripTimes::getTrip)
             .ifPresent(value -> sb.append(" like trip ").append(value.getId()));
         }

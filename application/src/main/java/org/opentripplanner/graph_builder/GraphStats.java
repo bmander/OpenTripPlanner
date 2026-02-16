@@ -232,7 +232,10 @@ public class GraphStats {
         LOG.info("total number of patterns is: {}", nPatterns);
         int nTrips = 0;
         for (TripPattern ttp : patterns) {
-          int patternNumTrips = (int) ttp.scheduledTripsAsStream().count();
+          int patternNumTrips = (int) timetableRepository
+            .getScheduledTimetable(ttp)
+            .tripsAsStream()
+            .count();
           counts.add(patternNumTrips);
           nTrips += patternNumTrips;
         }

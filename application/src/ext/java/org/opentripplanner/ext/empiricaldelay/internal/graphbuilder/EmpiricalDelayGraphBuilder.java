@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.ext.empiricaldelay.EmpiricalDelayRepository;
 import org.opentripplanner.ext.empiricaldelay.internal.csvinput.EmpiricalDelayCsvDataReader;
@@ -17,6 +19,7 @@ import org.opentripplanner.graph_builder.model.GraphBuilderModule;
 import org.opentripplanner.transit.model.framework.DeduplicatorService;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.service.TimetableRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +61,10 @@ public class EmpiricalDelayGraphBuilder implements GraphBuilderModule {
       return;
     }
     var mapper = new TripDelaysMapper(
-      createStopIdsByTripIdMap(timetableRepository.getAllTripPatterns()),
+      createStopIdsByTripIdMap(
+        timetableRepository.getAllTripPatterns(),
+        p -> timetableRepository.getScheduledTimetable(p).tripsAsStream()
+      ),
       issueStore,
       deduplicator
     );
@@ -80,12 +86,13 @@ public class EmpiricalDelayGraphBuilder implements GraphBuilderModule {
 
   /** Package local so we can test it */
   static Map<FeedScopedId, List<FeedScopedId>> createStopIdsByTripIdMap(
-    Collection<TripPattern> tripPatterns
+    Collection<TripPattern> tripPatterns,
+    Function<TripPattern, Stream<Trip>> getScheduledTrips
   ) {
     var map = new HashMap<FeedScopedId, List<FeedScopedId>>();
     for (var pattern : tripPatterns) {
-      pattern
-        .scheduledTripsAsStream()
+      getScheduledTrips
+        .apply(pattern)
         .forEach(it ->
           map.put(it.getId(), pattern.getStops().stream().map(StopLocation::getId).toList())
         );

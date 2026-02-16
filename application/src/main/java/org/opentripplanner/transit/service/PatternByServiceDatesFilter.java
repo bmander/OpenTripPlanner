@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.opentripplanner.apis.gtfs.model.LocalDateRange;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.network.TripPattern;
@@ -20,6 +21,7 @@ public class PatternByServiceDatesFilter {
 
   private final Function<Route, Collection<TripPattern>> getPatternsForRoute;
   private final Function<Trip, Collection<LocalDate>> getServiceDatesForTrip;
+  private final Function<TripPattern, Stream<Trip>> getScheduledTrips;
   private final LocalDateRange range;
 
   /**
@@ -29,10 +31,12 @@ public class PatternByServiceDatesFilter {
   public PatternByServiceDatesFilter(
     LocalDateRange range,
     Function<Route, Collection<TripPattern>> getPatternsForRoute,
-    Function<Trip, Collection<LocalDate>> getServiceDatesForTrip
+    Function<Trip, Collection<LocalDate>> getServiceDatesForTrip,
+    Function<TripPattern, Stream<Trip>> getScheduledTrips
   ) {
     this.getPatternsForRoute = Objects.requireNonNull(getPatternsForRoute);
     this.getServiceDatesForTrip = Objects.requireNonNull(getServiceDatesForTrip);
+    this.getScheduledTrips = Objects.requireNonNull(getScheduledTrips);
     this.range = range;
 
     if (range.unlimited()) {
@@ -64,8 +68,8 @@ public class PatternByServiceDatesFilter {
   }
 
   private boolean hasServicesOnDate(TripPattern pattern) {
-    return pattern
-      .scheduledTripsAsStream()
+    return getScheduledTrips
+      .apply(pattern)
       .anyMatch(trip -> {
         var dates = getServiceDatesForTrip.apply(trip);
 

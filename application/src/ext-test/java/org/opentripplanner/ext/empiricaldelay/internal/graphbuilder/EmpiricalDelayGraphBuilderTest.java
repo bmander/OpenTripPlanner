@@ -39,7 +39,10 @@ class EmpiricalDelayGraphBuilderTest {
       .withScheduledTimeTableBuilder(builder -> builder.addTripTimes(tripTimes))
       .build();
 
-    var map = EmpiricalDelayGraphBuilder.createStopIdsByTripIdMap(List.of(pattern));
+    var map = EmpiricalDelayGraphBuilder.createStopIdsByTripIdMap(
+      List.of(pattern),
+      TripPattern::scheduledTripsAsStream
+    );
 
     var stops = map.get(trip.getId());
     assertEquals(stopTimes.get(0).getStop().getId(), stops.get(0));
