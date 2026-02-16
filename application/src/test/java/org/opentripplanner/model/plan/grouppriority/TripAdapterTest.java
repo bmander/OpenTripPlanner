@@ -1,4 +1,4 @@
-package org.opentripplanner.transit.model.network.grouppriority;
+package org.opentripplanner.model.plan.grouppriority;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

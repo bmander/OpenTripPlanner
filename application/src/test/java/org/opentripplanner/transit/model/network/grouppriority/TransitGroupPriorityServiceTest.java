@@ -7,12 +7,12 @@ import static org.opentripplanner.routing.algorithm.raptoradapter.transit.reques
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.opentripplanner.model.plan.grouppriority.TripAdapter;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.request.TestRouteData;
 import org.opentripplanner.routing.api.request.request.filter.TransitGroupSelect;
 import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.site.RegularStop;
-import org.opentripplanner.transit.model.timetable.Trip;
 
 class TransitGroupPriorityServiceTest {
 
@@ -68,7 +68,7 @@ class TransitGroupPriorityServiceTest {
   private final TripPattern ferryF3 = routeF3.getTripPattern();
   private final TripPattern busB3 = routeB3.getTripPattern();
   private final TripPattern nullTripPattern = null;
-  private final Trip nullTrip = null;
+  private final EntityAdapter nullEntityAdapter = null;
 
   @Test
   void emptyConfigurationShouldReturnGroupZero() {
@@ -96,14 +96,14 @@ class TransitGroupPriorityServiceTest {
     assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(ferryF3));
 
     // Verify we get the same result with using the trip, not trip-pattern
-    assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullTrip));
+    assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullEntityAdapter));
     assertEquals(
       EXP_GROUP_1,
-      subject.lookupTransitGroupPriorityId(routeB2.firstTrip().trip())
+      subject.lookupTransitGroupPriorityId(new TripAdapter(routeB2.firstTrip().trip()))
     );
     assertEquals(
       EXP_GROUP_2,
-      subject.lookupTransitGroupPriorityId(routeR3.firstTrip().trip())
+      subject.lookupTransitGroupPriorityId(new TripAdapter(routeR3.firstTrip().trip()))
     );
   }
 
@@ -126,10 +126,10 @@ class TransitGroupPriorityServiceTest {
     assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(ferryF3));
 
     // Verify we get the same result with using the trip, not trip-pattern
-    assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullTrip));
+    assertEquals(EXP_GROUP_ID_BASE, subject.lookupTransitGroupPriorityId(nullEntityAdapter));
     assertEquals(
       EXP_GROUP_2,
-      subject.lookupTransitGroupPriorityId(routeR1.firstTrip().trip())
+      subject.lookupTransitGroupPriorityId(new TripAdapter(routeR1.firstTrip().trip()))
     );
   }
 

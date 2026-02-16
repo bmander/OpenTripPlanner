@@ -44,7 +44,9 @@ public class TransitGroupPriorityItineraryDecorator {
     int c2 = priorityGroupConfigurator.baseGroupId();
     for (Leg leg : itinerary.legs()) {
       if (leg.trip() != null) {
-        int newGroupId = priorityGroupConfigurator.lookupTransitGroupPriorityId(leg.trip());
+        int newGroupId = priorityGroupConfigurator.lookupTransitGroupPriorityId(
+          new TripAdapter(leg.trip())
+        );
         c2 = transitGroupCalculator.mergeInGroupId(c2, newGroupId);
       }
     }

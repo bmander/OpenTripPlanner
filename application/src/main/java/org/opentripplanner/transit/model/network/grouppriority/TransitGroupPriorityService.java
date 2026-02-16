@@ -11,7 +11,6 @@ import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.routing.api.request.framework.CostLinearFunction;
 import org.opentripplanner.routing.api.request.request.filter.TransitGroupSelect;
 import org.opentripplanner.transit.model.network.TripPattern;
-import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.utils.lang.ArrayUtils;
 
 /**
@@ -111,20 +110,14 @@ public class TransitGroupPriorityService {
   }
 
   /**
-   * Fetch/lookup the transit-group-id for the given trip.
-   * <p>
-   * @throws IllegalArgumentException if more than 32 group-ids are requested.
-   */
-  public int lookupTransitGroupPriorityId(Trip trip) {
-    return trip == null ? baseGroupId : lookupTransitGroupPriorityId(new TripAdapter(trip));
-  }
-
-  /**
    * Fetch/lookup the transit-group-id for the given entity.
    * <p>
    * @throws IllegalArgumentException if more than 32 group-ids are requested.
    */
-  private int lookupTransitGroupPriorityId(EntityAdapter entity) {
+  public int lookupTransitGroupPriorityId(EntityAdapter entity) {
+    if (entity == null) {
+      return baseGroupId;
+    }
     if (!enabled) {
       return baseGroupId;
     }

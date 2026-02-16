@@ -1,10 +1,11 @@
-package org.opentripplanner.transit.model.network.grouppriority;
+package org.opentripplanner.model.plan.grouppriority;
 
 import org.opentripplanner.core.model.id.FeedScopedId;
 import org.opentripplanner.transit.model.basic.TransitMode;
+import org.opentripplanner.transit.model.network.grouppriority.EntityAdapter;
 import org.opentripplanner.transit.model.timetable.Trip;
 
-class TripAdapter implements EntityAdapter {
+public class TripAdapter implements EntityAdapter {
 
   private final Trip trip;
 

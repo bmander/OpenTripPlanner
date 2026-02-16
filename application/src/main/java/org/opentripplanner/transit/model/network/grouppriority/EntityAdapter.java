@@ -8,7 +8,7 @@ import org.opentripplanner.transit.model.basic.TransitMode;
  * unique groupId based on the request config. We use the adapter pattern to be able to generate
  * the groupId based on different input types (TripPattern and Trip).
  */
-interface EntityAdapter {
+public interface EntityAdapter {
   TransitMode mode();
   String subMode();
   FeedScopedId agencyId();
