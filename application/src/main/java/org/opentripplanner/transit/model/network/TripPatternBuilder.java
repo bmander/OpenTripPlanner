@@ -29,6 +29,7 @@ public final class TripPatternBuilder
   private TransitMode mode;
   private SubMode netexSubMode;
   private StopPattern stopPattern;
+  private Direction direction;
   private Timetable scheduledTimetable;
   private TimetableBuilder scheduledTimetableBuilder;
 
@@ -50,6 +51,7 @@ public final class TripPatternBuilder
     this.netexSubMode = original.getNetexSubmode();
     this.containsMultipleModes = original.getContainsMultipleModes();
     this.stopPattern = original.getStopPattern();
+    this.direction = original.getDirection();
     this.scheduledTimetable = original.getScheduledTimetable();
     this.stopPatternModifiedInRealTime = original.isStopPatternModifiedInRealTime();
     this.realTimeTripPattern = original.isRealTimeTripPattern();
@@ -88,6 +90,11 @@ public final class TripPatternBuilder
 
   public TripPatternBuilder withStopPattern(StopPattern stopPattern) {
     this.stopPattern = stopPattern;
+    return this;
+  }
+
+  public TripPatternBuilder withDirection(Direction direction) {
+    this.direction = direction;
     return this;
   }
 
@@ -161,10 +168,16 @@ public final class TripPatternBuilder
   }
 
   public Direction getDirection() {
+    if (direction != null) {
+      return direction;
+    }
     if (scheduledTimetable != null) {
       return scheduledTimetable.getDirection();
     }
-    return scheduledTimetableBuilder.getDirection();
+    if (scheduledTimetableBuilder != null) {
+      return scheduledTimetableBuilder.getDirection();
+    }
+    return Direction.UNKNOWN;
   }
 
   @Override

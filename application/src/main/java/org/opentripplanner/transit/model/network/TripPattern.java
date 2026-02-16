@@ -67,6 +67,8 @@ public final class TripPattern
 
   private final Route route;
 
+  private final Direction direction;
+
   /**
    * This field should not be accessed outside this class. All access to the StopPattern is
    * performed through method  delegation, like the {@link #numberOfStops()} and
@@ -114,6 +116,7 @@ public final class TripPattern
     super(builder.getId());
     this.name = builder.getName();
     this.route = builder.getRoute();
+    this.direction = builder.getDirection();
     this.stopPattern = requireNonNull(builder.getStopPattern());
     this.realTimeTripPattern = builder.isRealTimeTripPattern();
     this.stopPatternModifiedInRealTime = builder.isStopPatternModifiedInRealTime();
@@ -384,7 +387,7 @@ public final class TripPattern
    * - trips derived from GTFS data are grouped by direction in a trip pattern, during graph build.
    */
   public Direction getDirection() {
-    return scheduledTimetable.getDirection();
+    return direction;
   }
 
   /**
