@@ -11,15 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Lightweight in-memory elevation grid that performs bilinear interpolation directly on raster data,
- * bypassing GeoTools' synchronized Interpolator2D and per-point CRS transformation machinery.
+ * Performs bilinear interpolation directly on raster elevation data, bypassing GeoTools'
+ * synchronized Interpolator2D and per-point CRS transformation machinery.
  *
  * <p>This is suitable for WGS84 (lon-first) rasters with a simple affine grid-to-world transform,
  * covering the common case (SRTM, NED, most GeoTIFFs).
  */
-class InMemoryElevationGridCoverage {
+class DirectElevationInterpolator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryElevationGridCoverage.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DirectElevationInterpolator.class);
 
   private final double[] data;
   private final int width;
@@ -28,7 +28,7 @@ class InMemoryElevationGridCoverage {
   private final double noDataValue;
   private final boolean hasNoData;
 
-  InMemoryElevationGridCoverage(
+  DirectElevationInterpolator(
     double[] data,
     int width,
     int height,
@@ -47,7 +47,7 @@ class InMemoryElevationGridCoverage {
   /**
    * Create from test parameters: a simple grid defined by bounds and resolution.
    */
-  static InMemoryElevationGridCoverage create(
+  static DirectElevationInterpolator create(
     double[] data,
     int width,
     int height,
@@ -66,7 +66,7 @@ class InMemoryElevationGridCoverage {
     );
     try {
       AffineTransform worldToGrid = gridToWorld.createInverse();
-      return new InMemoryElevationGridCoverage(data, width, height, worldToGrid, Double.NaN, false);
+      return new DirectElevationInterpolator(data, width, height, worldToGrid, Double.NaN, false);
     } catch (NoninvertibleTransformException e) {
       throw new IllegalArgumentException("Non-invertible grid-to-world transform", e);
     }
@@ -77,7 +77,7 @@ class InMemoryElevationGridCoverage {
    * transform or if data extraction fails.
    */
   @Nullable
-  static InMemoryElevationGridCoverage fromGridCoverage2D(GridCoverage2D gridCoverage) {
+  static DirectElevationInterpolator fromGridCoverage2D(GridCoverage2D gridCoverage) {
     try {
       var gridGeometry = gridCoverage.getGridGeometry();
       var mathTransform = gridGeometry.getGridToCRS();
@@ -104,12 +104,12 @@ class InMemoryElevationGridCoverage {
       }
 
       LOG.info(
-        "Created in-memory elevation grid: {}x{} pixels, noData={}",
+        "Created direct elevation interpolator: {}x{} pixels, noData={}",
         w,
         h,
         hasNoData ? noDataValue : "none"
       );
-      return new InMemoryElevationGridCoverage(data, w, h, worldToGrid, noDataValue, hasNoData);
+      return new DirectElevationInterpolator(data, w, h, worldToGrid, noDataValue, hasNoData);
     } catch (NoninvertibleTransformException e) {
       LOG.debug("Non-invertible grid transform, falling back to standard path", e);
       return null;

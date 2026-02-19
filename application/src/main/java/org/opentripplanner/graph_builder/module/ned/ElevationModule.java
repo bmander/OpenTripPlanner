@@ -126,7 +126,7 @@ public class ElevationModule implements GraphBuilderModule {
   private Coordinate examplarCoordinate;
   /** Used only when the ElevationModule is requested to be ran with a single thread */
   private Coverage singleThreadedCoverageInterpolator;
-  private InMemoryElevationGridCoverage inMemoryCoverage;
+  private DirectElevationInterpolator directInterpolator;
   private double minElevation = Double.MAX_VALUE;
   private double maxElevation = Double.MIN_VALUE;
 
@@ -598,9 +598,9 @@ public class ElevationModule implements GraphBuilderModule {
     throws PointOutsideCoverageException, TransformException {
     double rawValue;
 
-    if (inMemoryCoverage != null) {
+    if (directInterpolator != null) {
       try {
-        rawValue = inMemoryCoverage.evaluate(x, y);
+        rawValue = directInterpolator.evaluate(x, y);
       } catch (PointOutsideCoverageException e) {
         nPointsOutsideDEM.incrementAndGet();
         throw e;
@@ -634,8 +634,8 @@ public class ElevationModule implements GraphBuilderModule {
   }
 
   /** Package-private for testing. Sets the in-memory coverage for the fast evaluation path. */
-  void setInMemoryCoverage(InMemoryElevationGridCoverage coverage) {
-    this.inMemoryCoverage = coverage;
+  void setDirectInterpolator(DirectElevationInterpolator coverage) {
+    this.directInterpolator = coverage;
   }
 
   /**

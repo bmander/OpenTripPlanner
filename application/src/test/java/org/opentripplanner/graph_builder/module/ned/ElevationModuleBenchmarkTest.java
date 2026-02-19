@@ -66,7 +66,7 @@ class ElevationModuleBenchmarkTest {
   }
 
   @Test
-  void benchmarkWithInMemoryCoverage() {
+  void benchmarkWithDirectInterpolator() {
     Coverage coverage = mock(Coverage.class);
     doAnswer(invocation -> {
       double[] result = invocation.getArgument(1);
@@ -80,9 +80,9 @@ class ElevationModuleBenchmarkTest {
     when(factory.getGridCoverage()).thenReturn(coverage);
     when(factory.elevationUnitMultiplier()).thenReturn(1.0);
 
-    InMemoryElevationGridCoverage inMemory = buildSyntheticDem();
+    DirectElevationInterpolator inMemory = buildSyntheticDem();
     GraphAndEdgeCount graphData = buildTestGraph();
-    double median = runBenchmark("In-Memory Coverage", graphData, factory, inMemory);
+    double median = runBenchmark("Direct Interpolator", graphData, factory, inMemory);
 
     assertTrue(median > 1000, "Expected at least 1000 edges/sec, got " + median);
   }
@@ -91,7 +91,7 @@ class ElevationModuleBenchmarkTest {
     String label,
     GraphAndEdgeCount graphData,
     ElevationGridCoverageFactory factory,
-    InMemoryElevationGridCoverage inMemory
+    DirectElevationInterpolator inMemory
   ) {
     Graph graph = graphData.graph;
     int edgeCount = graphData.edgeCount;
@@ -111,7 +111,7 @@ class ElevationModuleBenchmarkTest {
 
       ElevationModule module = new ElevationModule(factory, graph);
       if (inMemory != null) {
-        module.setInMemoryCoverage(inMemory);
+        module.setDirectInterpolator(inMemory);
       }
 
       long start = System.nanoTime();
@@ -136,7 +136,7 @@ class ElevationModuleBenchmarkTest {
     return median;
   }
 
-  private InMemoryElevationGridCoverage buildSyntheticDem() {
+  private DirectElevationInterpolator buildSyntheticDem() {
     // Create a DEM raster covering the test area with elevation = lat * 100
     // Grid extent: slightly larger than the vertex grid to avoid boundary issues
     double margin = GRID_SPACING * 2;
@@ -158,7 +158,7 @@ class ElevationModuleBenchmarkTest {
       }
     }
 
-    return InMemoryElevationGridCoverage.create(
+    return DirectElevationInterpolator.create(
       data,
       demWidth,
       demHeight,
