@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -435,13 +434,10 @@ public class ElevationModule implements GraphBuilderModule {
     try {
       Coordinate[] coords = edgeGeometry.getCoordinates();
 
-      // Use a flat double[] to collect (distance, elevation) pairs, avoiding LinkedList and Coordinate allocations
-      double[] samples = new double[16];
-      int sampleCount = 0;
+      List<Coordinate> coordList = new LinkedList<>();
 
       // initial sample (x = 0)
-      samples[sampleCount++] = 0;
-      samples[sampleCount++] = getElevation(coverage, coords[0]);
+      coordList.add(new Coordinate(0, getElevation(coverage, coords[0])));
 
       // iterate through coordinates calculating the edge length and creating intermediate elevation coordinates at
       // the regularly specified interval
@@ -463,15 +459,16 @@ public class ElevationModule implements GraphBuilderModule {
 
           // calculate percent of current segment that distance is between
           double pctAlongSeg = (sampleDistance - previousDistance) / curSegmentDistance;
-          // grow buffer if needed
-          if (sampleCount + 2 > samples.length) {
-            samples = Arrays.copyOf(samples, samples.length * 2);
-          }
-          samples[sampleCount++] = sampleDistance;
-          samples[sampleCount++] = getElevationWrapped(
-            coverage,
-            x1 + (pctAlongSeg * (x2 - x1)),
-            y1 + (pctAlongSeg * (y2 - y1))
+          // add an elevation coordinate
+          coordList.add(
+            new Coordinate(
+              sampleDistance,
+              getElevationWrapped(
+                coverage,
+                x1 + (pctAlongSeg * (x2 - x1)),
+                y1 + (pctAlongSeg * (y2 - y1))
+              )
+            )
           );
           sampleDistance += distanceBetweenSamplesM;
         }
@@ -481,22 +478,18 @@ public class ElevationModule implements GraphBuilderModule {
       }
 
       // remove final-segment sample if it is less than half the distance between samples
-      if (sampleCount >= 2 && edgeLenM - samples[sampleCount - 2] < distanceBetweenSamplesM / 2) {
-        sampleCount -= 2;
+      if (edgeLenM - coordList.get(coordList.size() - 1).x < distanceBetweenSamplesM / 2) {
+        coordList.remove(coordList.size() - 1);
       }
 
       // final sample (x = edge length)
-      if (sampleCount + 2 > samples.length) {
-        samples = Arrays.copyOf(samples, samples.length * 2);
-      }
-      samples[sampleCount++] = edgeLenM;
-      samples[sampleCount++] = getElevation(coverage, coords[coords.length - 1]);
+      coordList.add(new Coordinate(edgeLenM, getElevation(coverage, coords[coords.length - 1])));
 
-      // construct the PCS directly from the flat double array
-      double[] trimmed = (sampleCount == samples.length)
-        ? samples
-        : Arrays.copyOf(samples, sampleCount);
-      PackedCoordinateSequence elevPCS = new PackedCoordinateSequence.Double(trimmed, 2, 0);
+      // construct the PCS
+      Coordinate[] coordArr = new Coordinate[coordList.size()];
+      PackedCoordinateSequence elevPCS = new PackedCoordinateSequence.Double(
+        coordList.toArray(coordArr)
+      );
 
       setEdgeElevationProfile(ee, elevPCS);
     } catch (ElevationLookupException e) {
