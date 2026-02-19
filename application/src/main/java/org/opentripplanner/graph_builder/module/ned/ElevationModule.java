@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -108,6 +109,10 @@ public class ElevationModule implements GraphBuilderModule {
   /** A concurrent hashmap used for storing geoid difference values at various coordinates */
   private final ConcurrentHashMap<Integer, Double> geoidDifferenceCache = new ConcurrentHashMap<>();
   private final ThreadLocal<Coverage> coverageInterpolatorThreadLocal = new ThreadLocal<>();
+  private final ThreadLocal<double[]> elevationResultBuffer =
+    ThreadLocal.withInitial(() -> new double[1]);
+  private final ThreadLocal<Position2D> positionBuffer =
+    ThreadLocal.withInitial(() -> new Position2D(WGS84_XY, 0, 0));
   private final DataImportIssueStore issueStore;
   /**
    * A map of PackedCoordinateSequence values identified by Strings of encoded polylines.
@@ -120,6 +125,7 @@ public class ElevationModule implements GraphBuilderModule {
   private Coordinate examplarCoordinate;
   /** Used only when the ElevationModule is requested to be ran with a single thread */
   private Coverage singleThreadedCoverageInterpolator;
+  private InMemoryElevationGridCoverage inMemoryCoverage;
   private double minElevation = Double.MAX_VALUE;
   private double maxElevation = Double.MIN_VALUE;
 
@@ -427,10 +433,13 @@ public class ElevationModule implements GraphBuilderModule {
     try {
       Coordinate[] coords = edgeGeometry.getCoordinates();
 
-      List<Coordinate> coordList = new LinkedList<>();
+      // Use a flat double[] to collect (distance, elevation) pairs, avoiding LinkedList and Coordinate allocations
+      double[] samples = new double[16];
+      int sampleCount = 0;
 
       // initial sample (x = 0)
-      coordList.add(new Coordinate(0, getElevation(coverage, coords[0])));
+      samples[sampleCount++] = 0;
+      samples[sampleCount++] = getElevation(coverage, coords[0]);
 
       // iterate through coordinates calculating the edge length and creating intermediate elevation coordinates at
       // the regularly specified interval
@@ -452,16 +461,17 @@ public class ElevationModule implements GraphBuilderModule {
 
           // calculate percent of current segment that distance is between
           double pctAlongSeg = (sampleDistance - previousDistance) / curSegmentDistance;
-          // add an elevation coordinate
-          coordList.add(
-            new Coordinate(
-              sampleDistance,
-              getElevation(
-                coverage,
-                new Coordinate(x1 + (pctAlongSeg * (x2 - x1)), y1 + (pctAlongSeg * (y2 - y1)))
-              )
-            )
-          );
+          // grow buffer if needed
+          if (sampleCount + 2 > samples.length) {
+            samples = Arrays.copyOf(samples, samples.length * 2);
+          }
+          samples[sampleCount++] = sampleDistance;
+          samples[sampleCount++] =
+            getElevationWrapped(
+              coverage,
+              x1 + (pctAlongSeg * (x2 - x1)),
+              y1 + (pctAlongSeg * (y2 - y1))
+            );
           sampleDistance += distanceBetweenSamplesM;
         }
         previousDistance = edgeLenM;
@@ -470,18 +480,25 @@ public class ElevationModule implements GraphBuilderModule {
       }
 
       // remove final-segment sample if it is less than half the distance between samples
-      if (edgeLenM - coordList.get(coordList.size() - 1).x < distanceBetweenSamplesM / 2) {
-        coordList.remove(coordList.size() - 1);
+      if (
+        sampleCount >= 2 &&
+        edgeLenM - samples[sampleCount - 2] < distanceBetweenSamplesM / 2
+      ) {
+        sampleCount -= 2;
       }
 
       // final sample (x = edge length)
-      coordList.add(new Coordinate(edgeLenM, getElevation(coverage, coords[coords.length - 1])));
+      if (sampleCount + 2 > samples.length) {
+        samples = Arrays.copyOf(samples, samples.length * 2);
+      }
+      samples[sampleCount++] = edgeLenM;
+      samples[sampleCount++] = getElevation(coverage, coords[coords.length - 1]);
 
-      // construct the PCS
-      Coordinate[] coordArr = new Coordinate[coordList.size()];
-      PackedCoordinateSequence elevPCS = new PackedCoordinateSequence.Double(
-        coordList.toArray(coordArr)
-      );
+      // construct the PCS directly from the flat double array
+      double[] trimmed = (sampleCount == samples.length)
+        ? samples
+        : Arrays.copyOf(samples, sampleCount);
+      PackedCoordinateSequence elevPCS = new PackedCoordinateSequence.Double(trimmed, 2, 0);
 
       setEdgeElevationProfile(ee, elevPCS);
     } catch (ElevationLookupException e) {
@@ -558,18 +575,21 @@ public class ElevationModule implements GraphBuilderModule {
    * @return elevation in meters
    */
   private double getElevation(Coverage coverage, Coordinate c) throws ElevationLookupException {
+    return getElevationWrapped(coverage, c.x, c.y);
+  }
+
+  /**
+   * Retrieves elevation at (x, y), wrapping any lookup failures as ElevationLookupException.
+   */
+  private double getElevationWrapped(Coverage coverage, double x, double y)
+    throws ElevationLookupException {
     try {
-      return getElevation(coverage, c.x, c.y);
+      return getElevation(coverage, x, y);
     } catch (
       ArrayIndexOutOfBoundsException
       | PointOutsideCoverageException
       | TransformException e
     ) {
-      // Each of the above exceptions can occur when finding the elevation at a coordinate.
-      // - The ArrayIndexOutOfBoundsException seems to occur at the edges of some elevation tiles that
-      //     might have areas with NoData. See https://github.com/opentripplanner/OpenTripPlanner/issues/2792
-      // - The PointOutsideCoverageException can be thrown for points that are outside of the elevation tile area.
-      // - The TransformException can occur when trying to compute the EllipsoidToGeoidDifference.
       throw new ElevationLookupException(e);
     }
   }
@@ -585,21 +605,33 @@ public class ElevationModule implements GraphBuilderModule {
    */
   private double getElevation(Coverage coverage, double x, double y)
     throws PointOutsideCoverageException, TransformException {
-    double[] values = new double[1];
-    try {
-      // We specify a CRS here because otherwise the coordinates are assumed to be in the coverage's native CRS.
-      // That assumption is fine when the coverage happens to be in longitude-first WGS84 but we want to support
-      // GeoTIFFs in various projections. Note that GeoTools defaults to strict EPSG axis ordering of (lat, long)
-      // for DefaultGeographicCRS.WGS84, but OTP is using (long, lat) throughout and assumes unprojected DEM
-      // rasters to also use (long, lat).
-      coverage.evaluate(new Position2D(WGS84_XY, x, y), values);
-    } catch (PointOutsideCoverageException e) {
-      nPointsOutsideDEM.incrementAndGet();
-      throw e;
+    double rawValue;
+
+    if (inMemoryCoverage != null) {
+      try {
+        rawValue = inMemoryCoverage.evaluate(x, y);
+      } catch (PointOutsideCoverageException e) {
+        nPointsOutsideDEM.incrementAndGet();
+        throw e;
+      }
+    } else {
+      double[] values = elevationResultBuffer.get();
+      Position2D pos = positionBuffer.get();
+      pos.setLocation(x, y);
+      try {
+        // We specify a CRS here because otherwise the coordinates are assumed to be in the
+        // coverage's native CRS. That assumption is fine when the coverage happens to be in
+        // longitude-first WGS84 but we want to support GeoTIFFs in various projections.
+        coverage.evaluate(pos, values);
+      } catch (PointOutsideCoverageException e) {
+        nPointsOutsideDEM.incrementAndGet();
+        throw e;
+      }
+      rawValue = values[0];
     }
 
     var elevation =
-      (values[0] * gridCoverageFactory.elevationUnitMultiplier()) -
+      (rawValue * gridCoverageFactory.elevationUnitMultiplier()) -
       (includeEllipsoidToGeoidDifference ? getApproximateEllipsoidToGeoidDifference(y, x) : 0);
 
     minElevation = Math.min(minElevation, elevation);
@@ -608,6 +640,11 @@ public class ElevationModule implements GraphBuilderModule {
     nPointsEvaluated.incrementAndGet();
 
     return elevation;
+  }
+
+  /** Package-private for testing. Sets the in-memory coverage for the fast evaluation path. */
+  void setInMemoryCoverage(InMemoryElevationGridCoverage coverage) {
+    this.inMemoryCoverage = coverage;
   }
 
   /**
