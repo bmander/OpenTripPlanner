@@ -109,10 +109,12 @@ public class ElevationModule implements GraphBuilderModule {
   /** A concurrent hashmap used for storing geoid difference values at various coordinates */
   private final ConcurrentHashMap<Integer, Double> geoidDifferenceCache = new ConcurrentHashMap<>();
   private final ThreadLocal<Coverage> coverageInterpolatorThreadLocal = new ThreadLocal<>();
-  private final ThreadLocal<double[]> elevationResultBuffer =
-    ThreadLocal.withInitial(() -> new double[1]);
-  private final ThreadLocal<Position2D> positionBuffer =
-    ThreadLocal.withInitial(() -> new Position2D(WGS84_XY, 0, 0));
+  private final ThreadLocal<double[]> elevationResultBuffer = ThreadLocal.withInitial(() ->
+    new double[1]
+  );
+  private final ThreadLocal<Position2D> positionBuffer = ThreadLocal.withInitial(() ->
+    new Position2D(WGS84_XY, 0, 0)
+  );
   private final DataImportIssueStore issueStore;
   /**
    * A map of PackedCoordinateSequence values identified by Strings of encoded polylines.
@@ -466,12 +468,11 @@ public class ElevationModule implements GraphBuilderModule {
             samples = Arrays.copyOf(samples, samples.length * 2);
           }
           samples[sampleCount++] = sampleDistance;
-          samples[sampleCount++] =
-            getElevationWrapped(
-              coverage,
-              x1 + (pctAlongSeg * (x2 - x1)),
-              y1 + (pctAlongSeg * (y2 - y1))
-            );
+          samples[sampleCount++] = getElevationWrapped(
+            coverage,
+            x1 + (pctAlongSeg * (x2 - x1)),
+            y1 + (pctAlongSeg * (y2 - y1))
+          );
           sampleDistance += distanceBetweenSamplesM;
         }
         previousDistance = edgeLenM;
@@ -480,10 +481,7 @@ public class ElevationModule implements GraphBuilderModule {
       }
 
       // remove final-segment sample if it is less than half the distance between samples
-      if (
-        sampleCount >= 2 &&
-        edgeLenM - samples[sampleCount - 2] < distanceBetweenSamplesM / 2
-      ) {
+      if (sampleCount >= 2 && edgeLenM - samples[sampleCount - 2] < distanceBetweenSamplesM / 2) {
         sampleCount -= 2;
       }
 

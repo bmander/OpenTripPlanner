@@ -51,7 +51,9 @@ class ElevationModuleBenchmarkTest {
       double[] result = invocation.getArgument(1);
       result[0] = pos.getY() * 100;
       return result;
-    }).when(coverage).evaluate(any(Position2D.class), any(double[].class));
+    })
+      .when(coverage)
+      .evaluate(any(Position2D.class), any(double[].class));
 
     ElevationGridCoverageFactory factory = mock(ElevationGridCoverageFactory.class);
     when(factory.getGridCoverage()).thenReturn(coverage);
@@ -70,7 +72,9 @@ class ElevationModuleBenchmarkTest {
       double[] result = invocation.getArgument(1);
       result[0] = 0;
       return result;
-    }).when(coverage).evaluate(any(Position2D.class), any(double[].class));
+    })
+      .when(coverage)
+      .evaluate(any(Position2D.class), any(double[].class));
 
     ElevationGridCoverageFactory factory = mock(ElevationGridCoverageFactory.class);
     when(factory.getGridCoverage()).thenReturn(coverage);

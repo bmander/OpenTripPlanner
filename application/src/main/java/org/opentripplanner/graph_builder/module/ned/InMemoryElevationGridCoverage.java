@@ -66,14 +66,7 @@ class InMemoryElevationGridCoverage {
     );
     try {
       AffineTransform worldToGrid = gridToWorld.createInverse();
-      return new InMemoryElevationGridCoverage(
-        data,
-        width,
-        height,
-        worldToGrid,
-        Double.NaN,
-        false
-      );
+      return new InMemoryElevationGridCoverage(data, width, height, worldToGrid, Double.NaN, false);
     } catch (NoninvertibleTransformException e) {
       throw new IllegalArgumentException("Non-invertible grid-to-world transform", e);
     }
@@ -100,13 +93,7 @@ class InMemoryElevationGridCoverage {
       Raster raster = renderedImage.getData();
       int w = raster.getWidth();
       int h = raster.getHeight();
-      double[] data = raster.getPixels(
-        raster.getMinX(),
-        raster.getMinY(),
-        w,
-        h,
-        (double[]) null
-      );
+      double[] data = raster.getPixels(raster.getMinX(), raster.getMinY(), w, h, (double[]) null);
 
       double noDataValue = Double.NaN;
       boolean hasNoData = false;
@@ -143,11 +130,9 @@ class InMemoryElevationGridCoverage {
   double evaluate(double x, double y) throws PointOutsideCoverageException {
     // Inline affine transform to avoid Point2D allocations
     double gx =
-      worldToGrid.getScaleX() * x + worldToGrid.getShearX() * y + worldToGrid.getTranslateX() -
-      0.5;
+      worldToGrid.getScaleX() * x + worldToGrid.getShearX() * y + worldToGrid.getTranslateX() - 0.5;
     double gy =
-      worldToGrid.getShearY() * x + worldToGrid.getScaleY() * y + worldToGrid.getTranslateY() -
-      0.5;
+      worldToGrid.getShearY() * x + worldToGrid.getScaleY() * y + worldToGrid.getTranslateY() - 0.5;
 
     int x0 = (int) Math.floor(gx);
     int y0 = (int) Math.floor(gy);
@@ -168,7 +153,10 @@ class InMemoryElevationGridCoverage {
     double v01 = data[y1 * width + x0];
     double v11 = data[y1 * width + x1];
 
-    if (hasNoData && (v00 == noDataValue || v10 == noDataValue || v01 == noDataValue || v11 == noDataValue)) {
+    if (
+      hasNoData &&
+      (v00 == noDataValue || v10 == noDataValue || v01 == noDataValue || v11 == noDataValue)
+    ) {
       throw new PointOutsideCoverageException("Value is NO_DATA at (" + x + ", " + y + ")");
     }
 
