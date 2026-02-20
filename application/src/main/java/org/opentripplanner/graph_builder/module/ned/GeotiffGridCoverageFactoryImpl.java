@@ -38,16 +38,19 @@ public class GeotiffGridCoverageFactoryImpl implements ElevationGridCoverageFact
   }
 
   /**
-   * Wraps the underlying grid coverage instance with an interpolator that can be used in a specific
-   * thread.
+   * Returns a coverage instance for elevation lookups. If the raster has a simple affine
+   * grid-to-world transform, returns a {@link DirectBilinearGridCoverage} that bypasses GeoTools'
+   * synchronized interpolation. Otherwise, falls back to the standard GeoTools interpolation path.
    */
   @Override
   public GridCoverage getGridCoverage() {
+    GridCoverage2D raw = getUninterpolatedGridCoverage();
+    DirectBilinearGridCoverage fast = DirectBilinearGridCoverage.fromGridCoverage2D(raw);
+    if (fast != null) {
+      return fast;
+    }
     return NoDataGridCoverage.create(
-      Interpolator2D.create(
-        getUninterpolatedGridCoverage(),
-        Interpolation.getInstance(Interpolation.INTERP_BILINEAR)
-      )
+      Interpolator2D.create(raw, Interpolation.getInstance(Interpolation.INTERP_BILINEAR))
     );
   }
 

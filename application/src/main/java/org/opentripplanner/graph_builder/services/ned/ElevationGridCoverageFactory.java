@@ -1,6 +1,5 @@
 package org.opentripplanner.graph_builder.services.ned;
 
-import javax.annotation.Nullable;
 import org.geotools.api.coverage.Coverage;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.opentripplanner.routing.graph.Graph;
@@ -30,14 +29,4 @@ public interface ElevationGridCoverageFactory {
    * cache
    */
   void fetchData(Graph graph);
-
-  /**
-   * Returns the raw, uninterpolated GridCoverage2D if available. Used for creating an in-memory
-   * fast-path elevation lookup that bypasses GeoTools' synchronized interpolation. Returns null by
-   * default; implementations may override.
-   */
-  @Nullable
-  default GridCoverage2D getUninterpolatedGridCoverage() {
-    return null;
-  }
 }

@@ -60,29 +60,21 @@ class ElevationModuleBenchmarkTest {
     when(factory.elevationUnitMultiplier()).thenReturn(1.0);
 
     GraphAndEdgeCount graphData = buildTestGraph();
-    double median = runBenchmark("Mock Coverage", graphData, factory, null);
+    double median = runBenchmark("Mock Coverage", graphData, factory);
 
     assertTrue(median > 1000, "Expected at least 1000 edges/sec, got " + median);
   }
 
   @Test
-  void benchmarkWithDirectInterpolator() {
-    Coverage coverage = mock(Coverage.class);
-    doAnswer(invocation -> {
-      double[] result = invocation.getArgument(1);
-      result[0] = 0;
-      return result;
-    })
-      .when(coverage)
-      .evaluate(any(Position2D.class), any(double[].class));
+  void benchmarkWithDirectBilinearGridCoverage() {
+    DirectBilinearGridCoverage directCoverage = buildSyntheticDem();
 
     ElevationGridCoverageFactory factory = mock(ElevationGridCoverageFactory.class);
-    when(factory.getGridCoverage()).thenReturn(coverage);
+    when(factory.getGridCoverage()).thenReturn(directCoverage);
     when(factory.elevationUnitMultiplier()).thenReturn(1.0);
 
-    DirectElevationInterpolator inMemory = buildSyntheticDem();
     GraphAndEdgeCount graphData = buildTestGraph();
-    double median = runBenchmark("Direct Interpolator", graphData, factory, inMemory);
+    double median = runBenchmark("Direct Bilinear GridCoverage", graphData, factory);
 
     assertTrue(median > 1000, "Expected at least 1000 edges/sec, got " + median);
   }
@@ -90,8 +82,7 @@ class ElevationModuleBenchmarkTest {
   private double runBenchmark(
     String label,
     GraphAndEdgeCount graphData,
-    ElevationGridCoverageFactory factory,
-    DirectElevationInterpolator inMemory
+    ElevationGridCoverageFactory factory
   ) {
     Graph graph = graphData.graph;
     int edgeCount = graphData.edgeCount;
@@ -110,9 +101,6 @@ class ElevationModuleBenchmarkTest {
       }
 
       ElevationModule module = new ElevationModule(factory, graph);
-      if (inMemory != null) {
-        module.setDirectInterpolator(inMemory);
-      }
 
       long start = System.nanoTime();
       module.buildGraph();
@@ -136,7 +124,7 @@ class ElevationModuleBenchmarkTest {
     return median;
   }
 
-  private DirectElevationInterpolator buildSyntheticDem() {
+  private DirectBilinearGridCoverage buildSyntheticDem() {
     // Create a DEM raster covering the test area with elevation = lat * 100
     // Grid extent: slightly larger than the vertex grid to avoid boundary issues
     double margin = GRID_SPACING * 2;
@@ -158,7 +146,7 @@ class ElevationModuleBenchmarkTest {
       }
     }
 
-    return DirectElevationInterpolator.create(
+    return DirectBilinearGridCoverage.create(
       data,
       demWidth,
       demHeight,

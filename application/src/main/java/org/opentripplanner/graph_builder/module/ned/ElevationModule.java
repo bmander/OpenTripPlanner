@@ -126,7 +126,6 @@ public class ElevationModule implements GraphBuilderModule {
   private Coordinate examplarCoordinate;
   /** Used only when the ElevationModule is requested to be ran with a single thread */
   private Coverage singleThreadedCoverageInterpolator;
-  private DirectElevationInterpolator directInterpolator;
   private double minElevation = Double.MAX_VALUE;
   private double maxElevation = Double.MIN_VALUE;
 
@@ -596,30 +595,20 @@ public class ElevationModule implements GraphBuilderModule {
    */
   private double getElevation(Coverage coverage, double x, double y)
     throws PointOutsideCoverageException, TransformException {
+    double[] values = elevationResultBuffer.get();
+    Position2D pos = positionBuffer.get();
+    pos.setLocation(x, y);
     double rawValue;
-
-    if (directInterpolator != null) {
-      try {
-        rawValue = directInterpolator.evaluate(x, y);
-      } catch (PointOutsideCoverageException e) {
-        nPointsOutsideDEM.incrementAndGet();
-        throw e;
-      }
-    } else {
-      double[] values = elevationResultBuffer.get();
-      Position2D pos = positionBuffer.get();
-      pos.setLocation(x, y);
-      try {
-        // We specify a CRS here because otherwise the coordinates are assumed to be in the
-        // coverage's native CRS. That assumption is fine when the coverage happens to be in
-        // longitude-first WGS84 but we want to support GeoTIFFs in various projections.
-        coverage.evaluate(pos, values);
-      } catch (PointOutsideCoverageException e) {
-        nPointsOutsideDEM.incrementAndGet();
-        throw e;
-      }
-      rawValue = values[0];
+    try {
+      // We specify a CRS here because otherwise the coordinates are assumed to be in the
+      // coverage's native CRS. That assumption is fine when the coverage happens to be in
+      // longitude-first WGS84 but we want to support GeoTIFFs in various projections.
+      coverage.evaluate(pos, values);
+    } catch (PointOutsideCoverageException e) {
+      nPointsOutsideDEM.incrementAndGet();
+      throw e;
     }
+    rawValue = values[0];
 
     var elevation =
       (rawValue * gridCoverageFactory.elevationUnitMultiplier()) -
@@ -631,11 +620,6 @@ public class ElevationModule implements GraphBuilderModule {
     nPointsEvaluated.incrementAndGet();
 
     return elevation;
-  }
-
-  /** Package-private for testing. Sets the in-memory coverage for the fast evaluation path. */
-  void setDirectInterpolator(DirectElevationInterpolator coverage) {
-    this.directInterpolator = coverage;
   }
 
   /**
