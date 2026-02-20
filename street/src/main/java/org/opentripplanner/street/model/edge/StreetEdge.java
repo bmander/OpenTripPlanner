@@ -1128,25 +1128,30 @@ public class StreetEdge
       case SAFE_STREETS -> weight = getEffectiveBicycleSafetyDistance() / speed;
       case FLAT_STREETS -> {
         /* see notes in StreetVertex on speed overhead */
-        double hillReluctance = mode == TraverseMode.BICYCLE
-          ? req.bike().hillReluctance()
-          : 1.0;
-        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
+        double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
+        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(
+          propulsion,
+          electricAssistSlopeSensitivity
+        );
         weight = (getDistanceMeters() + elevChangeDistance * hillReluctance) / speed;
       }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
         double quick = effectiveTimeDistance;
         double safety = getEffectiveBicycleSafetyDistance();
-        double hillReluctance = mode == TraverseMode.BICYCLE
-          ? req.bike().hillReluctance()
-          : 1.0;
-        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
+        double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
+        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(
+          propulsion,
+          electricAssistSlopeSensitivity
+        );
         double effectiveDistance = getDistanceMeters() + elevChangeDistance * hillReluctance;
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();
-        weight = quick * triangle.time() + effectiveDistance * triangle.slope() + safety * triangle.safety();
+        weight =
+          quick * triangle.time() +
+          effectiveDistance * triangle.slope() +
+          safety * triangle.safety();
         weight /= speed;
       }
       default -> weight = getDistanceMeters() / speed;
