@@ -96,7 +96,7 @@ public class StreetElevationExtension implements Serializable {
    * The extra effective distance due to hill effort beyond the flat distance,
    * calculated from the energy usage of the cyclist.
    */
-  public double getHillEffectiveDistance() {
+  public double getEffectiveElevChangeDistance() {
     return effectiveBikeDistanceForWorkCost - distanceMeters;
   }
 

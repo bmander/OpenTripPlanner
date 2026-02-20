@@ -234,8 +234,8 @@ public class StreetEdge
    * The extra effective distance due to hill effort beyond the flat distance.
    * Returns zero when there is no elevation data.
    */
-  public double getHillEffectiveDistance() {
-    return hasElevationExtension() ? elevationExtension.getHillEffectiveDistance() : 0.0;
+  public double getEffectiveElevChangeDistance() {
+    return hasElevationExtension() ? elevationExtension.getEffectiveElevChangeDistance() : 0.0;
   }
 
   public float getBicycleSafetyFactor() {
@@ -1131,8 +1131,8 @@ public class StreetEdge
         double hillReluctance = mode == TraverseMode.BICYCLE
           ? req.bike().hillReluctance()
           : 1.0;
-        double hillEffectiveDistance = getHillEffectiveDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
-        weight = (getDistanceMeters() + hillEffectiveDistance * hillReluctance) / speed;
+        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
+        weight = (getDistanceMeters() + elevChangeDistance * hillReluctance) / speed;
       }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
@@ -1141,8 +1141,8 @@ public class StreetEdge
         double hillReluctance = mode == TraverseMode.BICYCLE
           ? req.bike().hillReluctance()
           : 1.0;
-        double hillEffectiveDistance = getHillEffectiveDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
-        double effectiveDistance = getDistanceMeters() + hillEffectiveDistance * hillReluctance;
+        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity);
+        double effectiveDistance = getDistanceMeters() + elevChangeDistance * hillReluctance;
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();
@@ -1184,17 +1184,17 @@ public class StreetEdge
    * Return the extra effective distance due to hill effort, beyond flat distance,
    * adjusted for propulsion type. For electric vehicles this is zero (motor handles hills).
    */
-  private double getHillEffectiveDistanceForPropulsion(
+  private double getEffectiveElevChangeDistanceForPropulsion(
     PropulsionType propulsion,
     double electricAssistSlopeSensitivity
   ) {
     if (propulsion == null) {
-      return getHillEffectiveDistance();
+      return getEffectiveElevChangeDistance();
     }
     return switch (propulsion) {
       case ELECTRIC -> 0.0;
-      case ELECTRIC_ASSIST -> getHillEffectiveDistance() * electricAssistSlopeSensitivity;
-      default -> getHillEffectiveDistance();
+      case ELECTRIC_ASSIST -> getEffectiveElevChangeDistance() * electricAssistSlopeSensitivity;
+      default -> getEffectiveElevChangeDistance();
     };
   }
 
