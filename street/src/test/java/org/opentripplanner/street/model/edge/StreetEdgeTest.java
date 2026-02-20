@@ -356,7 +356,7 @@ public class StreetEdgeTest {
 
     SlopeCosts costs = ElevationUtils.getSlopeCosts(elev, true);
     double trueLength = costs.lengthMultiplier * length;
-    double slopeWorkLength = testStreet.getEffectiveBikeDistanceForWorkCost();
+    double slopeWorkLength = length + testStreet.getHillEffectiveDistance();
     double slopeSpeedLength = testStreet.getEffectiveBikeDistance();
 
     var request = StreetSearchRequest.of().withMode(StreetMode.BIKE);

@@ -93,11 +93,11 @@ public class StreetElevationExtension implements Serializable {
   }
 
   /**
-   * The distance multiplied by a factor considering how much more/less convenient it is to bike
-   * the edge, compared to if it was flat. This is calculated form the energy usage of the cyclist.
+   * The extra effective distance due to hill effort beyond the flat distance,
+   * calculated from the energy usage of the cyclist.
    */
-  public double getEffectiveBikeDistanceForWorkCost() {
-    return effectiveBikeDistanceForWorkCost;
+  public double getHillEffectiveDistance() {
+    return effectiveBikeDistanceForWorkCost - distanceMeters;
   }
 
   /**
