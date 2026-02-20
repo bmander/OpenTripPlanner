@@ -1128,9 +1128,22 @@ public class StreetEdge
         }
       }
       case SAFE_STREETS -> weight = getEffectiveBicycleSafetyDistance() / speed;
-      case FLAT_STREETS ->
-        /* see notes in StreetVertex on speed overhead */ weight =
-          getEffectiveWorkDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity) / speed;
+      case FLAT_STREETS -> {
+        /* see notes in StreetVertex on speed overhead */
+        double slope = getEffectiveWorkDistanceForPropulsion(
+          propulsion,
+          electricAssistSlopeSensitivity
+        );
+        double hillReluctance = mode == TraverseMode.BICYCLE
+          ? req.bike().hillReluctance()
+          : 1.0;
+        if (hillReluctance != 1.0) {
+          double flatDist = getDistanceMeters();
+          double elevPenalty = slope - flatDist;
+          slope = flatDist + elevPenalty * hillReluctance;
+        }
+        weight = slope / speed;
+      }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
         double quick = effectiveTimeDistance;
@@ -1139,6 +1152,14 @@ public class StreetEdge
           propulsion,
           electricAssistSlopeSensitivity
         );
+        double hillReluctance = mode == TraverseMode.BICYCLE
+          ? req.bike().hillReluctance()
+          : 1.0;
+        if (hillReluctance != 1.0) {
+          double flatDist = getDistanceMeters();
+          double elevPenalty = slope - flatDist;
+          slope = flatDist + elevPenalty * hillReluctance;
+        }
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();

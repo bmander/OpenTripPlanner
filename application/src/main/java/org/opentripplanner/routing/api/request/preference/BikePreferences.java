@@ -32,6 +32,7 @@ public final class BikePreferences implements Serializable {
   private final VehicleRoutingOptimizeType optimizeType;
   private final TimeSlopeSafetyTriangle optimizeTriangle;
   private final VehicleWalkingPreferences walking;
+  private final double hillReluctance;
 
   private BikePreferences() {
     this.speed = 5;
@@ -42,6 +43,7 @@ public final class BikePreferences implements Serializable {
     this.optimizeType = SAFE_STREETS;
     this.optimizeTriangle = TimeSlopeSafetyTriangle.DEFAULT;
     this.walking = VehicleWalkingPreferences.DEFAULT;
+    this.hillReluctance = 1.0;
   }
 
   private BikePreferences(Builder builder) {
@@ -53,6 +55,7 @@ public final class BikePreferences implements Serializable {
     this.optimizeType = Objects.requireNonNull(builder.optimizeType);
     this.optimizeTriangle = Objects.requireNonNull(builder.optimizeTriangle);
     this.walking = builder.walking;
+    this.hillReluctance = builder.hillReluctance;
   }
 
   public static BikePreferences.Builder of() {
@@ -109,6 +112,14 @@ public final class BikePreferences implements Serializable {
     return walking;
   }
 
+  /**
+   * A multiplier applied to the elevation penalty portion of edge costs.
+   * 1.0 gives default behavior; higher values make the router avoid hills more aggressively.
+   */
+  public double hillReluctance() {
+    return hillReluctance;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -126,7 +137,8 @@ public final class BikePreferences implements Serializable {
       Objects.equals(rental, that.rental) &&
       optimizeType == that.optimizeType &&
       optimizeTriangle.equals(that.optimizeTriangle) &&
-      Objects.equals(walking, that.walking)
+      Objects.equals(walking, that.walking) &&
+      doubleEquals(that.hillReluctance, hillReluctance)
     );
   }
 
@@ -140,7 +152,8 @@ public final class BikePreferences implements Serializable {
       rental,
       optimizeType,
       optimizeTriangle,
-      walking
+      walking,
+      hillReluctance
     );
   }
 
@@ -155,6 +168,7 @@ public final class BikePreferences implements Serializable {
       .addEnum("optimizeType", optimizeType, DEFAULT.optimizeType)
       .addObj("optimizeTriangle", optimizeTriangle, DEFAULT.optimizeTriangle)
       .addObj("walking", walking, DEFAULT.walking)
+      .addNum("hillReluctance", hillReluctance, DEFAULT.hillReluctance)
       .toString();
   }
 
@@ -170,6 +184,7 @@ public final class BikePreferences implements Serializable {
     private VehicleRoutingOptimizeType optimizeType;
     private TimeSlopeSafetyTriangle optimizeTriangle;
     private VehicleWalkingPreferences walking;
+    private double hillReluctance;
 
     public Builder(BikePreferences original) {
       this.original = original;
@@ -181,6 +196,7 @@ public final class BikePreferences implements Serializable {
       this.optimizeType = original.optimizeType;
       this.optimizeTriangle = original.optimizeTriangle;
       this.walking = original.walking;
+      this.hillReluctance = original.hillReluctance;
     }
 
     public BikePreferences original() {
@@ -257,6 +273,11 @@ public final class BikePreferences implements Serializable {
 
     public Builder withWalking(Consumer<VehicleWalkingPreferences.Builder> body) {
       this.walking = ifNotNull(this.walking, original.walking).copyOf().apply(body).build();
+      return this;
+    }
+
+    public Builder withHillReluctance(double hillReluctance) {
+      this.hillReluctance = hillReluctance;
       return this;
     }
 

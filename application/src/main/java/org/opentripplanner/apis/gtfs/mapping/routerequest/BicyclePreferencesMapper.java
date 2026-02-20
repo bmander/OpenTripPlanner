@@ -42,6 +42,10 @@ public class BicyclePreferencesMapper {
       setBicycleParkingPreferences(parking, args.getGraphQLParking(), environment)
     );
     preferences.withRental(rental -> setBicycleRentalPreferences(rental, args.getGraphQLRental()));
+    var hillReluctance = args.getGraphQLHillReluctance();
+    if (hillReluctance != null) {
+      preferences.withHillReluctance(hillReluctance);
+    }
     setBicycleOptimization(preferences, args.getGraphQLOptimization());
   }
 

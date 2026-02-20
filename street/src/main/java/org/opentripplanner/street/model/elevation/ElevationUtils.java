@@ -14,7 +14,7 @@ public class ElevationUtils {
    */
   private static final double ENERGY_PER_METER_ON_FLAT = 1;
 
-  private static final double ENERGY_SLOPE_FACTOR = 4000;
+  private static final double ENERGY_SLOPE_FACTOR = 65;
 
   /**
    * If the calculated factor is more than this constant, we ignore the calculated factor and use
@@ -129,8 +129,7 @@ public class ElevationUtils {
       double hypotenuse = Math.sqrt(rise * rise + run * run);
       double energy =
         hypotenuse *
-        (ENERGY_PER_METER_ON_FLAT +
-          ENERGY_SLOPE_FACTOR * slope_or_zero * slope_or_zero * slope_or_zero);
+        (ENERGY_PER_METER_ON_FLAT + ENERGY_SLOPE_FACTOR * slope_or_zero);
       slopeWorkCost += energy;
       double slopeSpeedCoef = slopeSpeedCoefficient(slope, coordinates[i].y);
       slopeSpeedEffectiveLength += run / slopeSpeedCoef;
