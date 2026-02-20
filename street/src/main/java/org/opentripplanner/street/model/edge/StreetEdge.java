@@ -1128,23 +1128,19 @@ public class StreetEdge
       case SAFE_STREETS -> weight = getEffectiveBicycleSafetyDistance() / speed;
       case FLAT_STREETS -> {
         /* see notes in StreetVertex on speed overhead */
+        double elevChange = getEffectiveElevChangeDistance();
+        double propulsionCoeff = getElevChangePropulsionCoefficient(propulsion, electricAssistSlopeSensitivity);
         double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
-        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(
-          propulsion,
-          electricAssistSlopeSensitivity
-        );
-        weight = (getDistanceMeters() + elevChangeDistance * hillReluctance) / speed;
+        weight = (getDistanceMeters() + elevChange * propulsionCoeff * hillReluctance) / speed;
       }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
         double quick = effectiveTimeDistance;
         double safety = getEffectiveBicycleSafetyDistance();
+        double elevChange = getEffectiveElevChangeDistance();
+        double propulsionCoeff = getElevChangePropulsionCoefficient(propulsion, electricAssistSlopeSensitivity);
         double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
-        double elevChangeDistance = getEffectiveElevChangeDistanceForPropulsion(
-          propulsion,
-          electricAssistSlopeSensitivity
-        );
-        double effectiveDistance = getDistanceMeters() + elevChangeDistance * hillReluctance;
+        double effectiveDistance = getDistanceMeters() + elevChange * propulsionCoeff * hillReluctance;
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();
@@ -1186,20 +1182,21 @@ public class StreetEdge
   }
 
   /**
-   * Return the extra effective distance due to hill effort, beyond flat distance,
-   * adjusted for propulsion type. For electric vehicles this is zero (motor handles hills).
+   * Return a coefficient [0.0, 1.0] that scales the elevation change distance based on
+   * propulsion type. Electric vehicles fully negate hills (0.0), electric-assist partially
+   * reduces them, and human-powered vehicles get the full effect (1.0).
    */
-  private double getEffectiveElevChangeDistanceForPropulsion(
+  private double getElevChangePropulsionCoefficient(
     PropulsionType propulsion,
     double electricAssistSlopeSensitivity
   ) {
     if (propulsion == null) {
-      return getEffectiveElevChangeDistance();
+      return 1.0;
     }
     return switch (propulsion) {
       case ELECTRIC -> 0.0;
-      case ELECTRIC_ASSIST -> getEffectiveElevChangeDistance() * electricAssistSlopeSensitivity;
-      default -> getEffectiveElevChangeDistance();
+      case ELECTRIC_ASSIST -> electricAssistSlopeSensitivity;
+      default -> 1.0;
     };
   }
 
