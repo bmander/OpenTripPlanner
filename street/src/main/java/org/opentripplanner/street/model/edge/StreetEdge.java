@@ -1130,40 +1130,25 @@ public class StreetEdge
       case SAFE_STREETS -> weight = getEffectiveBicycleSafetyDistance() / speed;
       case FLAT_STREETS -> {
         /* see notes in StreetVertex on speed overhead */
-        double slope = getEffectiveWorkDistanceForPropulsion(
-          propulsion,
-          electricAssistSlopeSensitivity
-        );
         double hillReluctance = mode == TraverseMode.BICYCLE
           ? req.bike().hillReluctance()
           : 1.0;
-        if (hillReluctance != 1.0) {
-          double flatDist = getDistanceMeters();
-          double elevPenalty = slope - flatDist;
-          slope = flatDist + elevPenalty * hillReluctance;
-        }
-        weight = slope / speed;
+        double hillEffectiveDistance = getHillEffectiveDistance(propulsion, electricAssistSlopeSensitivity);
+        weight = (getDistanceMeters() + hillEffectiveDistance * hillReluctance) / speed;
       }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
         double quick = effectiveTimeDistance;
         double safety = getEffectiveBicycleSafetyDistance();
-        double slope = getEffectiveWorkDistanceForPropulsion(
-          propulsion,
-          electricAssistSlopeSensitivity
-        );
         double hillReluctance = mode == TraverseMode.BICYCLE
           ? req.bike().hillReluctance()
           : 1.0;
-        if (hillReluctance != 1.0) {
-          double flatDist = getDistanceMeters();
-          double elevPenalty = slope - flatDist;
-          slope = flatDist + elevPenalty * hillReluctance;
-        }
+        double hillEffectiveDistance = getHillEffectiveDistance(propulsion, electricAssistSlopeSensitivity);
+        double effectiveDistance = getDistanceMeters() + hillEffectiveDistance * hillReluctance;
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();
-        weight = quick * triangle.time() + slope * triangle.slope() + safety * triangle.safety();
+        weight = quick * triangle.time() + effectiveDistance * triangle.slope() + safety * triangle.safety();
         weight /= speed;
       }
       default -> weight = getDistanceMeters() / speed;
@@ -1198,22 +1183,24 @@ public class StreetEdge
   }
 
   /**
-   * Calculate effective work distance based on propulsion type.
+   * Return the extra effective distance due to hill effort, beyond flat distance,
+   * adjusted for propulsion type. For electric vehicles this is zero (motor handles hills).
    */
-  private double getEffectiveWorkDistanceForPropulsion(
+  private double getHillEffectiveDistance(
     PropulsionType propulsion,
     double electricAssistSlopeSensitivity
   ) {
+    double flatDist = getDistanceMeters();
     if (propulsion == null) {
-      return getEffectiveBikeDistanceForWorkCost();
+      return getEffectiveBikeDistanceForWorkCost() - flatDist;
     }
     return switch (propulsion) {
-      case ELECTRIC -> getDistanceMeters();
+      case ELECTRIC -> 0.0;
       case ELECTRIC_ASSIST -> interpolateSlopeEffect(
         getEffectiveBikeDistanceForWorkCost(),
         electricAssistSlopeSensitivity
-      );
-      default -> getEffectiveBikeDistanceForWorkCost();
+      ) - flatDist;
+      default -> getEffectiveBikeDistanceForWorkCost() - flatDist;
     };
   }
 
