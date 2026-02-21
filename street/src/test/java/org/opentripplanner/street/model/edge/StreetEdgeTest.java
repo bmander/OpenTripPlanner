@@ -384,8 +384,8 @@ public class StreetEdgeTest {
     double slopeWeight = result.getWeight();
     double expectedSlopeWeight = slopeWorkLength / SPEED;
     assertEquals(expectedSlopeWeight, slopeWeight, DELTA);
-    assertTrue((length * 1.5) / SPEED < slopeWeight);
-    assertTrue((length * 1.5 * 10) / SPEED > slopeWeight);
+    assertTrue(length / SPEED < slopeWeight);
+    assertTrue((length * 3) / SPEED > slopeWeight);
 
     request.withBike(bike -> bike.withOptimizeTriangle(it -> it.withSafety(1)));
     startState = new State(v1, request.build());

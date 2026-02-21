@@ -100,7 +100,7 @@ public class StreetElevationExtensionBuilder {
     SlopeCosts costs = ElevationUtils.getSlopeCosts(elevationProfile, slopeLimit);
 
     var effectiveBikeDistanceFactor = costs.slopeSpeedFactor;
-    var effectiveBikeWorkFactor = costs.slopeWorkFactor;
+    var elevationGain = ElevationUtils.getEffectiveElevGainDistance(elevationProfile, slopeLimit);
     var effectiveWalkDistanceFactor = costs.effectiveWalkFactor;
     var maxSlope = (float) costs.maxSlope;
     var flattened = costs.flattened;
@@ -128,6 +128,7 @@ public class StreetElevationExtensionBuilder {
       // Ignore elevation related costs for stairs, RouteRequest#stairsTimeFactor is used instead.
       effectiveBikeDistanceFactor = 1.0;
       effectiveWalkDistanceFactor = 1.0;
+      elevationGain = 0.0;
     }
 
     return new StreetElevationExtension(
@@ -136,7 +137,7 @@ public class StreetElevationExtensionBuilder {
       elevationProfile,
       effectiveBicycleSafetyFactor,
       effectiveBikeDistanceFactor,
-      effectiveBikeWorkFactor,
+      elevationGain,
       effectiveWalkDistanceFactor,
       effectiveWalkSafetyFactor,
       costs.lengthMultiplier,

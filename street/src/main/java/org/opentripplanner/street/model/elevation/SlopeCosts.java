@@ -8,10 +8,6 @@ public class SlopeCosts {
    */
   public final double slopeSpeedFactor;
   /**
-   * The slope work factor in joules per meters at 5 m/s
-   */
-  public final double slopeWorkFactor;
-  /**
    * Max{abs(slope)}
    */
   public final double maxSlope;
@@ -33,7 +29,6 @@ public class SlopeCosts {
 
   public SlopeCosts(
     double slopeSpeedFactor,
-    double slopeWorkFactor,
     double slopeSafetyCost,
     double maxSlope,
     double lengthMultiplier,
@@ -41,7 +36,6 @@ public class SlopeCosts {
     double effectiveWalkFactor
   ) {
     this.slopeSpeedFactor = slopeSpeedFactor;
-    this.slopeWorkFactor = slopeWorkFactor;
     this.slopeSafetyCost = slopeSafetyCost;
     this.maxSlope = maxSlope;
     this.lengthMultiplier = lengthMultiplier;

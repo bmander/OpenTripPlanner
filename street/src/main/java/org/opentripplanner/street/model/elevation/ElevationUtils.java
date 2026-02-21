@@ -8,13 +8,14 @@ import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 
 public class ElevationUtils {
 
-  /*
-   * These numbers disagree with everything else I (David Turner) have read about the energy cost
-   * of cycling but given that we are going to be fudging them anyway, they're not totally crazy
+  /**
+   * Meters of effective horizontal distance per meter of elevation gain. This is an average of the
+   * figures in Broach, J., Dill, J., & Gliebe, J. (2012). "Where do cyclists ride? A route choice
+   * model developed with revealed preference GPS data." Transportation Research Part A: Policy and
+   * Practice, 46(10), 1730-1740. That study shows values around 12 for 2-3% slopes and around 44
+   * for 5% slopes; 30 is a reasonable average across typical cycling grades.
    */
-  private static final double ENERGY_PER_METER_ON_FLAT = 1;
-
-  private static final double ENERGY_SLOPE_FACTOR = 65;
+  private static final double ELEV_GAIN_EFFECTIVE_LENGTH_FACTOR = 30;
 
   /**
    * If the calculated factor is more than this constant, we ignore the calculated factor and use
@@ -92,7 +93,6 @@ public class ElevationUtils {
     boolean flattened = false;
     double maxSlope = 0;
     double slopeSpeedEffectiveLength = 0;
-    double slopeWorkCost = 0;
     double slopeSafetyCost = 0;
     double effectiveWalkLength = 0;
     double[] lengths = getLengthsFromElevation(elev);
@@ -100,7 +100,7 @@ public class ElevationUtils {
     double flatLength = lengths[1];
     if (flatLength < 1e-3) {
       // Too small edge, returning neutral slope costs.
-      return new SlopeCosts(1.0, 1.0, 0.0, 0.0, 1.0, false, 1.0);
+      return new SlopeCosts(1.0, 0.0, 0.0, 1.0, false, 1.0);
     }
     double lengthMultiplier = trueLength / flatLength;
     for (int i = 0; i < coordinates.length - 1; ++i) {
@@ -125,10 +125,7 @@ public class ElevationUtils {
         maxSlope = Math.abs(slope);
       }
 
-      double slope_or_zero = Math.max(slope, 0);
       double hypotenuse = Math.sqrt(rise * rise + run * run);
-      double energy = hypotenuse * (ENERGY_PER_METER_ON_FLAT + ENERGY_SLOPE_FACTOR * slope_or_zero);
-      slopeWorkCost += energy;
       double slopeSpeedCoef = slopeSpeedCoefficient(slope, coordinates[i].y);
       slopeSpeedEffectiveLength += run / slopeSpeedCoef;
       // assume that speed and safety are inverses
@@ -144,13 +141,48 @@ public class ElevationUtils {
      */
     return new SlopeCosts(
       slopeSpeedEffectiveLength / flatLength,
-      slopeWorkCost / flatLength,
       slopeSafetyCost,
       maxSlope,
       lengthMultiplier,
       flattened,
       effectiveWalkLength / flatLength
     );
+  }
+
+  /**
+   * Calculate the effective distance penalty from elevation gain. Each meter of uphill gain is
+   * treated as equivalent to {@link #ELEV_GAIN_EFFECTIVE_LENGTH_FACTOR} meters of flat travel.
+   * <p>
+   * We use total elevation gain rather than a slope-dependent model. While the literature shows
+   * that slope matters (steeper grades have a higher per-meter cost), our elevation profiles are
+   * often noisy due to the profiling technique. High apparent slopes in noisy profiles would
+   * produce extreme penalties on segments that are not actually steep. Using total elevation gain
+   * bypasses this issue entirely: accidental slope noise averages out over any segment to which it
+   * contributes.
+   *
+   * @param elev       The elevation profile, where each (x, y) is (distance along edge, elevation)
+   * @param slopeLimit Whether the slope should be limited to 0.35, which is the max slope for
+   *                   streets that take cars.
+   * @return Effective distance in meters due to elevation gain.
+   */
+  public static double getEffectiveElevGainDistance(CoordinateSequence elev, boolean slopeLimit) {
+    Coordinate[] coordinates = elev.toCoordinateArray();
+    double elevationGain = 0;
+    for (int i = 0; i < coordinates.length - 1; ++i) {
+      double run = coordinates[i + 1].x - coordinates[i].x;
+      double rise = coordinates[i + 1].y - coordinates[i].y;
+      if (run == 0) {
+        continue;
+      }
+      double slope = rise / run;
+      if ((slopeLimit && (slope > 0.35 || slope < -0.35)) || slope > 1.0 || slope < -1.0) {
+        continue;
+      }
+      if (rise > 0) {
+        elevationGain += rise;
+      }
+    }
+    return elevationGain * ELEV_GAIN_EFFECTIVE_LENGTH_FACTOR;
   }
 
   public static PackedCoordinateSequence getPartialElevationProfile(
