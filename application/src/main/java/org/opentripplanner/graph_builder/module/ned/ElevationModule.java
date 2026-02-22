@@ -108,6 +108,12 @@ public class ElevationModule implements GraphBuilderModule {
   /** A concurrent hashmap used for storing geoid difference values at various coordinates */
   private final ConcurrentHashMap<Integer, Double> geoidDifferenceCache = new ConcurrentHashMap<>();
   private final ThreadLocal<Coverage> coverageInterpolatorThreadLocal = new ThreadLocal<>();
+  private final ThreadLocal<double[]> elevationResultBuffer = ThreadLocal.withInitial(() ->
+    new double[1]
+  );
+  private final ThreadLocal<Position2D> positionBuffer = ThreadLocal.withInitial(() ->
+    new Position2D(WGS84_XY, 0, 0)
+  );
   private final DataImportIssueStore issueStore;
   /**
    * A map of PackedCoordinateSequence values identified by Strings of encoded polylines.
@@ -456,9 +462,10 @@ public class ElevationModule implements GraphBuilderModule {
           coordList.add(
             new Coordinate(
               sampleDistance,
-              getElevation(
+              getElevationWrapped(
                 coverage,
-                new Coordinate(x1 + (pctAlongSeg * (x2 - x1)), y1 + (pctAlongSeg * (y2 - y1)))
+                x1 + (pctAlongSeg * (x2 - x1)),
+                y1 + (pctAlongSeg * (y2 - y1))
               )
             )
           );
@@ -558,18 +565,21 @@ public class ElevationModule implements GraphBuilderModule {
    * @return elevation in meters
    */
   private double getElevation(Coverage coverage, Coordinate c) throws ElevationLookupException {
+    return getElevationWrapped(coverage, c.x, c.y);
+  }
+
+  /**
+   * Retrieves elevation at (x, y), wrapping any lookup failures as ElevationLookupException.
+   */
+  private double getElevationWrapped(Coverage coverage, double x, double y)
+    throws ElevationLookupException {
     try {
-      return getElevation(coverage, c.x, c.y);
+      return getElevation(coverage, x, y);
     } catch (
       ArrayIndexOutOfBoundsException
       | PointOutsideCoverageException
       | TransformException e
     ) {
-      // Each of the above exceptions can occur when finding the elevation at a coordinate.
-      // - The ArrayIndexOutOfBoundsException seems to occur at the edges of some elevation tiles that
-      //     might have areas with NoData. See https://github.com/opentripplanner/OpenTripPlanner/issues/2792
-      // - The PointOutsideCoverageException can be thrown for points that are outside of the elevation tile area.
-      // - The TransformException can occur when trying to compute the EllipsoidToGeoidDifference.
       throw new ElevationLookupException(e);
     }
   }
@@ -585,21 +595,23 @@ public class ElevationModule implements GraphBuilderModule {
    */
   private double getElevation(Coverage coverage, double x, double y)
     throws PointOutsideCoverageException, TransformException {
-    double[] values = new double[1];
+    double[] values = elevationResultBuffer.get();
+    Position2D pos = positionBuffer.get();
+    pos.setLocation(x, y);
+    double rawValue;
     try {
-      // We specify a CRS here because otherwise the coordinates are assumed to be in the coverage's native CRS.
-      // That assumption is fine when the coverage happens to be in longitude-first WGS84 but we want to support
-      // GeoTIFFs in various projections. Note that GeoTools defaults to strict EPSG axis ordering of (lat, long)
-      // for DefaultGeographicCRS.WGS84, but OTP is using (long, lat) throughout and assumes unprojected DEM
-      // rasters to also use (long, lat).
-      coverage.evaluate(new Position2D(WGS84_XY, x, y), values);
+      // We specify a CRS here because otherwise the coordinates are assumed to be in the
+      // coverage's native CRS. That assumption is fine when the coverage happens to be in
+      // longitude-first WGS84 but we want to support GeoTIFFs in various projections.
+      coverage.evaluate(pos, values);
     } catch (PointOutsideCoverageException e) {
       nPointsOutsideDEM.incrementAndGet();
       throw e;
     }
+    rawValue = values[0];
 
     var elevation =
-      (values[0] * gridCoverageFactory.elevationUnitMultiplier()) -
+      (rawValue * gridCoverageFactory.elevationUnitMultiplier()) -
       (includeEllipsoidToGeoidDifference ? getApproximateEllipsoidToGeoidDifference(y, x) : 0);
 
     minElevation = Math.min(minElevation, elevation);
