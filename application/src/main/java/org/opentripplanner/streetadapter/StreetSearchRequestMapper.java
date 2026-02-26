@@ -133,7 +133,8 @@ public class StreetSearchRequestMapper {
       .withRental(b2 -> mapRental(b2, preferences.rental()))
       .withOptimizeType(preferences.optimizeType())
       .withOptimizeTriangle(mapTriangle(preferences.optimizeTriangle()))
-      .withWalking(b2 -> mapVehicleWalking(b2, preferences.walking()));
+      .withWalking(b2 -> mapVehicleWalking(b2, preferences.walking()))
+      .withHillReluctance(preferences.hillReluctance());
   }
 
   private static TimeSlopeSafetyTriangle mapTriangle(

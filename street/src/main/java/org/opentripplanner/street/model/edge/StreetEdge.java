@@ -231,13 +231,11 @@ public class StreetEdge
   }
 
   /**
-   * This gets the effective work amount for bikes, taking the effort required to traverse the
-   * slopes into account.
+   * The extra effective distance due to hill effort beyond the flat distance.
+   * Returns zero when there is no elevation data.
    */
-  public double getEffectiveBikeDistanceForWorkCost() {
-    return hasElevationExtension()
-      ? elevationExtension.getEffectiveBikeDistanceForWorkCost()
-      : getDistanceMeters();
+  public double getEffectiveElevChangeDistance() {
+    return hasElevationExtension() ? elevationExtension.getEffectiveElevChangeDistance() : 0.0;
   }
 
   public float getBicycleSafetyFactor() {
@@ -1128,21 +1126,28 @@ public class StreetEdge
         }
       }
       case SAFE_STREETS -> weight = getEffectiveBicycleSafetyDistance() / speed;
-      case FLAT_STREETS ->
-        /* see notes in StreetVertex on speed overhead */ weight =
-          getEffectiveWorkDistanceForPropulsion(propulsion, electricAssistSlopeSensitivity) / speed;
+      case FLAT_STREETS -> {
+        /* see notes in StreetVertex on speed overhead */
+        double elevChange = getEffectiveElevChangeDistance();
+        double propulsionCoeff = getElevChangePropulsionCoefficient(propulsion, electricAssistSlopeSensitivity);
+        double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
+        weight = (getDistanceMeters() + elevChange * propulsionCoeff * hillReluctance) / speed;
+      }
       case SHORTEST_DURATION -> weight = effectiveTimeDistance / speed;
       case TRIANGLE -> {
         double quick = effectiveTimeDistance;
         double safety = getEffectiveBicycleSafetyDistance();
-        double slope = getEffectiveWorkDistanceForPropulsion(
-          propulsion,
-          electricAssistSlopeSensitivity
-        );
+        double elevChange = getEffectiveElevChangeDistance();
+        double propulsionCoeff = getElevChangePropulsionCoefficient(propulsion, electricAssistSlopeSensitivity);
+        double hillReluctance = mode == TraverseMode.BICYCLE ? req.bike().hillReluctance() : 1.0;
+        double effectiveDistance = getDistanceMeters() + elevChange * propulsionCoeff * hillReluctance;
         var triangle = mode == TraverseMode.BICYCLE
           ? req.bike().optimizeTriangle()
           : req.scooter().optimizeTriangle();
-        weight = quick * triangle.time() + slope * triangle.slope() + safety * triangle.safety();
+        weight =
+          quick * triangle.time() +
+          effectiveDistance * triangle.slope() +
+          safety * triangle.safety();
         weight /= speed;
       }
       default -> weight = getDistanceMeters() / speed;
@@ -1177,22 +1182,21 @@ public class StreetEdge
   }
 
   /**
-   * Calculate effective work distance based on propulsion type.
+   * Return a coefficient [0.0, 1.0] that scales the elevation change distance based on
+   * propulsion type. Electric vehicles fully negate hills (0.0), electric-assist partially
+   * reduces them, and human-powered vehicles get the full effect (1.0).
    */
-  private double getEffectiveWorkDistanceForPropulsion(
+  private double getElevChangePropulsionCoefficient(
     PropulsionType propulsion,
     double electricAssistSlopeSensitivity
   ) {
     if (propulsion == null) {
-      return getEffectiveBikeDistanceForWorkCost();
+      return 1.0;
     }
     return switch (propulsion) {
-      case ELECTRIC -> getDistanceMeters();
-      case ELECTRIC_ASSIST -> interpolateSlopeEffect(
-        getEffectiveBikeDistanceForWorkCost(),
-        electricAssistSlopeSensitivity
-      );
-      default -> getEffectiveBikeDistanceForWorkCost();
+      case ELECTRIC -> 0.0;
+      case ELECTRIC_ASSIST -> electricAssistSlopeSensitivity;
+      default -> 1.0;
     };
   }
 

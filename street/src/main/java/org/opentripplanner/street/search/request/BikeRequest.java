@@ -29,6 +29,7 @@ public final class BikeRequest {
   private final VehicleRoutingOptimizeType optimizeType;
   private final TimeSlopeSafetyTriangle optimizeTriangle;
   private final VehicleWalkingRequest walking;
+  private final double hillReluctance;
 
   private BikeRequest() {
     this.speed = 5;
@@ -38,6 +39,7 @@ public final class BikeRequest {
     this.optimizeType = SAFE_STREETS;
     this.optimizeTriangle = TimeSlopeSafetyTriangle.DEFAULT;
     this.walking = VehicleWalkingRequest.DEFAULT;
+    this.hillReluctance = 1.0;
   }
 
   private BikeRequest(Builder builder) {
@@ -48,6 +50,7 @@ public final class BikeRequest {
     this.optimizeType = Objects.requireNonNull(builder.optimizeType);
     this.optimizeTriangle = Objects.requireNonNull(builder.optimizeTriangle);
     this.walking = builder.walking;
+    this.hillReluctance = builder.hillReluctance;
   }
 
   public static Builder of() {
@@ -95,6 +98,10 @@ public final class BikeRequest {
     return walking;
   }
 
+  public double hillReluctance() {
+    return hillReluctance;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -111,7 +118,8 @@ public final class BikeRequest {
       Objects.equals(rental, that.rental) &&
       optimizeType == that.optimizeType &&
       optimizeTriangle.equals(that.optimizeTriangle) &&
-      Objects.equals(walking, that.walking)
+      Objects.equals(walking, that.walking) &&
+      doubleEquals(that.hillReluctance, hillReluctance)
     );
   }
 
@@ -124,7 +132,8 @@ public final class BikeRequest {
       rental,
       optimizeType,
       optimizeTriangle,
-      walking
+      walking,
+      hillReluctance
     );
   }
 
@@ -138,6 +147,7 @@ public final class BikeRequest {
       .addEnum("optimizeType", optimizeType, DEFAULT.optimizeType)
       .addObj("optimizeTriangle", optimizeTriangle, DEFAULT.optimizeTriangle)
       .addObj("walking", walking, DEFAULT.walking)
+      .addNum("hillReluctance", hillReluctance, DEFAULT.hillReluctance)
       .toString();
   }
 
@@ -152,6 +162,7 @@ public final class BikeRequest {
     private VehicleRoutingOptimizeType optimizeType;
     private TimeSlopeSafetyTriangle optimizeTriangle;
     private VehicleWalkingRequest walking;
+    private double hillReluctance;
 
     public Builder(BikeRequest original) {
       this.original = original;
@@ -162,6 +173,7 @@ public final class BikeRequest {
       this.optimizeType = original.optimizeType;
       this.optimizeTriangle = original.optimizeTriangle;
       this.walking = original.walking;
+      this.hillReluctance = original.hillReluctance;
     }
 
     public BikeRequest original() {
@@ -234,6 +246,11 @@ public final class BikeRequest {
 
     public Builder withWalking(Consumer<VehicleWalkingRequest.Builder> body) {
       this.walking = ifNotNull(this.walking, original.walking).copyOf().apply(body).build();
+      return this;
+    }
+
+    public Builder withHillReluctance(double hillReluctance) {
+      this.hillReluctance = hillReluctance;
       return this;
     }
 

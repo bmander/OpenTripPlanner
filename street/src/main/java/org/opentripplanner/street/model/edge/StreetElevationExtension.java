@@ -20,7 +20,7 @@ public class StreetElevationExtension implements Serializable {
 
   private final double effectiveBikeDistance;
 
-  private final double effectiveBikeDistanceForWorkCost;
+  private final double elevationGain;
 
   private final double effectiveWalkDistance;
 
@@ -38,7 +38,7 @@ public class StreetElevationExtension implements Serializable {
     PackedCoordinateSequence packedElevationProfile,
     float effectiveBicycleSafetyFactor,
     double effectiveBikeDistanceFactor,
-    double effectiveBikeWorkFactor,
+    double elevationGain,
     double effectiveWalkDistanceFactor,
     double effectiveWalkSafetyFactor,
     double lengthMultiplier,
@@ -48,7 +48,7 @@ public class StreetElevationExtension implements Serializable {
     this.distanceMeters = distanceMeters;
     this.effectiveBicycleSafetyDistance = effectiveBicycleSafetyFactor * distanceMeters;
     this.effectiveBikeDistance = effectiveBikeDistanceFactor * distanceMeters;
-    this.effectiveBikeDistanceForWorkCost = effectiveBikeWorkFactor * distanceMeters;
+    this.elevationGain = elevationGain;
     this.effectiveWalkDistance = effectiveWalkDistanceFactor * distanceMeters;
     this.effectiveWalkSafetyDistance = effectiveWalkSafetyFactor * distanceMeters;
     this.distanceWithElevation = lengthMultiplier * distanceMeters;
@@ -93,11 +93,10 @@ public class StreetElevationExtension implements Serializable {
   }
 
   /**
-   * The distance multiplied by a factor considering how much more/less convenient it is to bike
-   * the edge, compared to if it was flat. This is calculated form the energy usage of the cyclist.
+   * The total elevation gain (uphill meters) for this edge.
    */
-  public double getEffectiveBikeDistanceForWorkCost() {
-    return effectiveBikeDistanceForWorkCost;
+  public double getEffectiveElevChangeDistance() {
+    return elevationGain;
   }
 
   /**
@@ -137,7 +136,7 @@ public class StreetElevationExtension implements Serializable {
       .addNum("distanceMeters", distanceMeters)
       .addNum("effectiveBicycleSafetyFactor", effectiveBicycleSafetyDistance)
       .addNum("effectiveBikeDistance", effectiveBikeDistance)
-      .addNum("effectiveBikeDistanceForWorkCost", effectiveBikeDistanceForWorkCost)
+      .addNum("elevationGain", elevationGain)
       .addNum("effectiveWalkDistance", effectiveWalkDistance)
       .addNum("maxSlope", maxSlope)
       .toString();

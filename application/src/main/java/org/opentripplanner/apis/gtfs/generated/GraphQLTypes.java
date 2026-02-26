@@ -244,6 +244,7 @@ public class GraphQLTypes {
   public static class GraphQLBicyclePreferencesInput {
 
     private org.opentripplanner.core.model.basic.Cost boardCost;
+    private Double hillReluctance;
     private GraphQLCyclingOptimizationInput optimization;
     private GraphQLBicycleParkingPreferencesInput parking;
     private Double reluctance;
@@ -254,6 +255,7 @@ public class GraphQLTypes {
     public GraphQLBicyclePreferencesInput(Map<String, Object> args) {
       if (args != null) {
         this.boardCost = (org.opentripplanner.core.model.basic.Cost) args.get("boardCost");
+        this.hillReluctance = (Double) args.get("hillReluctance");
         this.optimization = new GraphQLCyclingOptimizationInput(
           (Map<String, Object>) args.get("optimization")
         );
@@ -271,6 +273,10 @@ public class GraphQLTypes {
 
     public org.opentripplanner.core.model.basic.Cost getGraphQLBoardCost() {
       return this.boardCost;
+    }
+
+    public Double getGraphQLHillReluctance() {
+      return this.hillReluctance;
     }
 
     public GraphQLCyclingOptimizationInput getGraphQLOptimization() {
