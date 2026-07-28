@@ -182,39 +182,58 @@ public class RouteRequestMapper {
     GraphQLTypes.GraphQLPlanLabeledLocationInput locationInput
   ) {
     var location = locationInput.getGraphQLLocation();
+    var label = locationInput.getGraphQLLabel();
+
     var tripLocation = location.getGraphQLTripLocation();
     if (tripLocation.getGraphQLTripId() != null) {
-      var stopLocationId = FeedScopedId.parseStrict(tripLocation.getGraphQLStopLocationId());
-      var tripOnDate = TripOnDateReference.ofTripIdAndServiceDate(
-        FeedScopedId.parseStrict(tripLocation.getGraphQLTripId()),
-        tripLocation.getGraphQLServiceDate()
-      );
-      var scheduledDepartureTime = tripLocation.getGraphQLScheduledDepartureTime();
-      return GenericLocation.fromTripLocation(
-        scheduledDepartureTime == null
-          ? TripLocation.of(tripOnDate, stopLocationId)
-          : TripLocation.of(tripOnDate, stopLocationId, scheduledDepartureTime.toInstant()),
-        locationInput.getGraphQLLabel()
-      );
+      return mapTripLocation(tripLocation, label);
     }
 
     var stopLocation = location.getGraphQLStopLocation();
     if (stopLocation.getGraphQLStopLocationId() != null) {
-      var stopId = stopLocation.getGraphQLStopLocationId();
-      return FeedScopedId.parseOptional(stopId)
-        .map(feedScopedId ->
-          GenericLocation.fromStopId(feedScopedId, locationInput.getGraphQLLabel())
-        )
-        .orElseThrow(() ->
-          new IllegalArgumentException("Stop id %s is not of valid format.".formatted(stopId))
-        );
+      return mapStopLocation(stopLocation, label);
     }
 
-    var coordinate = location.getGraphQLCoordinate();
+    return mapCoordinate(location.getGraphQLCoordinate(), label);
+  }
+
+  private static GenericLocation mapTripLocation(
+    GraphQLTypes.GraphQLPlanTripLocationInput tripLocation,
+    @Nullable String label
+  ) {
+    var tripOnDateReference = TripOnDateReference.ofTripIdAndServiceDate(
+      FeedScopedId.parseStrict(tripLocation.getGraphQLTripId()),
+      tripLocation.getGraphQLServiceDate()
+    );
+    var stopLocationId = FeedScopedId.parseStrict(tripLocation.getGraphQLStopLocationId());
+    var scheduledDepartureTime = tripLocation.getGraphQLScheduledDepartureTime();
+
+    var mappedTripLocation = scheduledDepartureTime == null
+      ? TripLocation.of(tripOnDateReference, stopLocationId)
+      : TripLocation.of(tripOnDateReference, stopLocationId, scheduledDepartureTime.toInstant());
+    return GenericLocation.fromTripLocation(mappedTripLocation, label);
+  }
+
+  private static GenericLocation mapStopLocation(
+    GraphQLTypes.GraphQLPlanStopLocationInput stopLocation,
+    @Nullable String label
+  ) {
+    var stopId = stopLocation.getGraphQLStopLocationId();
+    return FeedScopedId.parseOptional(stopId)
+      .map(feedScopedId -> GenericLocation.fromStopId(feedScopedId, label))
+      .orElseThrow(() ->
+        new IllegalArgumentException("Stop id %s is not of valid format.".formatted(stopId))
+      );
+  }
+
+  private static GenericLocation mapCoordinate(
+    GraphQLTypes.GraphQLPlanCoordinateInput coordinate,
+    @Nullable String label
+  ) {
     return GenericLocation.fromCoordinate(
       coordinate.getGraphQLLatitude(),
       coordinate.getGraphQLLongitude(),
-      locationInput.getGraphQLLabel()
+      label
     );
   }
 
