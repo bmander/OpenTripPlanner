@@ -1947,7 +1947,10 @@ type QueryType {
     access, egress and transfers.
     """
     modes: PlanModesInput,
-    "The origin where the search starts. Usually coordinates but can also be a stop location."
+    """
+    The origin where the search starts. Usually coordinates, but can also be a stop location or a
+    position on board a specific dated transit trip.
+    """
     origin: PlanLabeledLocationInput!,
     "Preferences that affect what itineraries are returned. Preferences are split into categories."
     preferences: PlanPreferencesInput,
