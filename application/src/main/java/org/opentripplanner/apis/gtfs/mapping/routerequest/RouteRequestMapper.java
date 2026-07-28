@@ -186,20 +186,29 @@ public class RouteRequestMapper {
 
     var tripLocation = location.getGraphQLTripLocation();
     if (tripLocation.getGraphQLTripId() != null) {
-      return mapTripLocation(tripLocation, label);
+      return GenericLocation.fromTripLocation(mapTripLocation(tripLocation), label);
     }
 
     var stopLocation = location.getGraphQLStopLocation();
     if (stopLocation.getGraphQLStopLocationId() != null) {
-      return mapStopLocation(stopLocation, label);
+      var stopId = stopLocation.getGraphQLStopLocationId();
+      return FeedScopedId.parseOptional(stopId)
+        .map(feedScopedId -> GenericLocation.fromStopId(feedScopedId, label))
+        .orElseThrow(() ->
+          new IllegalArgumentException("Stop id %s is not of valid format.".formatted(stopId))
+        );
     }
 
-    return mapCoordinate(location.getGraphQLCoordinate(), label);
+    var coordinate = location.getGraphQLCoordinate();
+    return GenericLocation.fromCoordinate(
+      coordinate.getGraphQLLatitude(),
+      coordinate.getGraphQLLongitude(),
+      label
+    );
   }
 
-  private static GenericLocation mapTripLocation(
-    GraphQLTypes.GraphQLPlanTripLocationInput tripLocation,
-    @Nullable String label
+  private static TripLocation mapTripLocation(
+    GraphQLTypes.GraphQLPlanTripLocationInput tripLocation
   ) {
     var tripOnDateReference = TripOnDateReference.ofTripIdAndServiceDate(
       FeedScopedId.parseStrict(tripLocation.getGraphQLTripId()),
@@ -208,33 +217,9 @@ public class RouteRequestMapper {
     var stopLocationId = FeedScopedId.parseStrict(tripLocation.getGraphQLStopLocationId());
     var scheduledDepartureTime = tripLocation.getGraphQLScheduledDepartureTime();
 
-    var mappedTripLocation = scheduledDepartureTime == null
+    return scheduledDepartureTime == null
       ? TripLocation.of(tripOnDateReference, stopLocationId)
       : TripLocation.of(tripOnDateReference, stopLocationId, scheduledDepartureTime.toInstant());
-    return GenericLocation.fromTripLocation(mappedTripLocation, label);
-  }
-
-  private static GenericLocation mapStopLocation(
-    GraphQLTypes.GraphQLPlanStopLocationInput stopLocation,
-    @Nullable String label
-  ) {
-    var stopId = stopLocation.getGraphQLStopLocationId();
-    return FeedScopedId.parseOptional(stopId)
-      .map(feedScopedId -> GenericLocation.fromStopId(feedScopedId, label))
-      .orElseThrow(() ->
-        new IllegalArgumentException("Stop id %s is not of valid format.".formatted(stopId))
-      );
-  }
-
-  private static GenericLocation mapCoordinate(
-    GraphQLTypes.GraphQLPlanCoordinateInput coordinate,
-    @Nullable String label
-  ) {
-    return GenericLocation.fromCoordinate(
-      coordinate.getGraphQLLatitude(),
-      coordinate.getGraphQLLongitude(),
-      label
-    );
   }
 
   static void mapViaPoints(RouteRequestBuilder request, List<Map<String, Object>> via) {
